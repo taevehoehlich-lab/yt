@@ -1,0 +1,209 @@
+<!doctype html>
+<html lang="de">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>lernfunke – Ausmalbilder, Kinderbücher & mehr zum Download</title>
+  <meta name="description" content="lernfunke: liebevoll gestaltete digitale Produkte für Kinder – Ausmalbilder, Kinderbücher und Lernmaterial als sofortiger Download.">
+  <link rel="icon" href="assets/logo.png">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@400;500;600&family=Nunito:wght@400;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+<!-- Hintergrund-Blobs (morphen dauerhaft, reagieren auf Scroll) -->
+<svg class="bg-blobs" aria-hidden="true" viewBox="0 0 1000 1000" preserveAspectRatio="xMidYMid slice">
+  <path data-blob data-seed="1" data-cx="150" data-cy="180" data-r="170" fill="var(--sage)" opacity=".16"/>
+  <path data-blob data-seed="2" data-cx="880" data-cy="420" data-r="210" fill="var(--gold)" opacity=".18"/>
+  <path data-blob data-seed="3" data-cx="260" data-cy="860" data-r="190" fill="var(--terra)" opacity=".13"/>
+</svg>
+
+<header class="nav" id="nav">
+  <a href="#top" class="brand" aria-label="lernfunke Startseite">
+    <span class="brand-l">lern</span><span class="brand-f">funke</span>
+    <svg class="spark" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 1c.6 5.2 2.8 9.4 11 11-8.2 1.6-10.4 5.8-11 11-.6-5.2-2.8-9.4-11-11 8.200-1.600 10.400-5.800 11-11z" fill="currentColor"/></svg>
+  </a>
+  <nav class="links" id="links">
+    <a href="#shop">Shop</a>
+    <a href="#so-gehts">So funktioniert's</a>
+    <a href="#ueber-uns">Über uns</a>
+    <a href="#faq">FAQ</a>
+  </nav>
+  <button class="cart-btn" id="cartOpen" aria-label="Warenkorb öffnen">
+    <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 6h15l-1.500 9H7.500L6 6zm0 0L5 2H2"/><circle cx="9" cy="20" r="1.200"/><circle cx="18" cy="20" r="1.200"/></svg>
+    <span class="count" id="cartCount">0</span>
+  </button>
+  <button class="burger" id="burger" aria-label="Menü" aria-expanded="false"><span></span><span></span></button>
+</header>
+
+<main id="top">
+
+  <!-- HERO -->
+  <section class="hero">
+    <div class="hero-text">
+      <p class="eyebrow reveal">Digitale Produkte für kleine Entdecker</p>
+      <h1 class="reveal">Ein kleiner <span class="hl">Funke</span>,<br>der Lernen zum Strahlen bringt.</h1>
+      <p class="lead reveal">Ausmalbilder, Kinderbücher und Lernmaterial – liebevoll gestaltet, sofort als Download verfügbar und beliebig oft ausdruckbar.</p>
+      <div class="cta reveal">
+        <a href="#shop" class="btn btn-primary">Zum Shop</a>
+        <a href="#so-gehts" class="btn btn-ghost">So funktioniert's</a>
+      </div>
+      <ul class="trust reveal">
+        <li>⚡ Sofort-Download</li>
+        <li>🖨️ Beliebig oft druckbar</li>
+        <li>💛 Mit Liebe gemacht</li>
+      </ul>
+    </div>
+    <div class="hero-art reveal" aria-hidden="true">
+      <svg viewBox="0 0 500 500" class="hero-svg">
+        <path data-blob data-seed="4" data-cx="250" data-cy="250" data-r="205" data-amp=".16" fill="var(--gold)" opacity=".35"/>
+        <path data-blob data-seed="5" data-cx="250" data-cy="250" data-r="165" data-amp=".2" fill="var(--terra)" opacity=".85"/>
+        <path data-blob data-seed="6" data-cx="250" data-cy="250" data-r="115" data-amp=".22" fill="var(--sage)"/>
+        <g class="hero-star">
+          <path d="M250 175c4 40 20 66 75 75-55 9-71 35-75 75-4-40-20-66-75-75 55-9 71-35 75-75z" fill="#fff8e6"/>
+        </g>
+      </svg>
+      <span class="float f1">🎨</span>
+      <span class="float f2">📖</span>
+      <span class="float f3">✏️</span>
+      <span class="float f4">🦕</span>
+    </div>
+  </section>
+
+  <!-- Marquee -->
+  <div class="marquee" aria-hidden="true">
+    <div class="marquee-track">
+      <span>Ausmalbilder</span><i>✦</i><span>Kinderbücher</span><i>✦</i><span>Lernspiele</span><i>✦</i><span>Rätselhefte</span><i>✦</i><span>Übungsblätter</span><i>✦</i>
+      <span>Ausmalbilder</span><i>✦</i><span>Kinderbücher</span><i>✦</i><span>Lernspiele</span><i>✦</i><span>Rätselhefte</span><i>✦</i><span>Übungsblätter</span><i>✦</i>
+    </div>
+  </div>
+
+  <!-- SHOP -->
+  <section class="section" id="shop">
+    <div class="section-head reveal">
+      <p class="eyebrow">Der Shop</p>
+      <h2>Entdecke unsere Downloads</h2>
+      <p class="lead">Kaufen, herunterladen, ausdrucken – fertig. Alle Produkte als PDF.</p>
+    </div>
+    <div class="filters reveal" id="filters" role="tablist" aria-label="Kategorien"></div>
+    <div class="grid" id="grid"></div>
+  </section>
+
+  <!-- SO GEHT'S -->
+  <section class="section steps-section" id="so-gehts">
+    <div class="section-head reveal">
+      <p class="eyebrow">Ganz einfach</p>
+      <h2>In drei Schritten zum Lernspaß</h2>
+    </div>
+    <div class="steps">
+      <article class="step reveal">
+        <svg class="step-blob" viewBox="0 0 200 200" aria-hidden="true"><path data-blob data-seed="7" data-cx="100" data-cy="100" data-r="82" data-amp=".18" fill="var(--sage)" opacity=".25"/></svg>
+        <span class="num">1</span>
+        <h3>Aussuchen</h3>
+        <p>Stöbere im Shop und lege deine Favoriten in den Warenkorb.</p>
+      </article>
+      <article class="step reveal">
+        <svg class="step-blob" viewBox="0 0 200 200" aria-hidden="true"><path data-blob data-seed="8" data-cx="100" data-cy="100" data-r="82" data-amp=".18" fill="var(--terra)" opacity=".22"/></svg>
+        <span class="num">2</span>
+        <h3>Bezahlen</h3>
+        <p>Sicher bezahlen – und den Download-Link sofort per E-Mail erhalten.</p>
+      </article>
+      <article class="step reveal">
+        <svg class="step-blob" viewBox="0 0 200 200" aria-hidden="true"><path data-blob data-seed="9" data-cx="100" data-cy="100" data-r="82" data-amp=".18" fill="var(--gold)" opacity=".35"/></svg>
+        <span class="num">3</span>
+        <h3>Ausdrucken & loslegen</h3>
+        <p>PDF herunterladen, drucken, so oft du möchtest – und los geht's.</p>
+      </article>
+    </div>
+  </section>
+
+  <!-- ÜBER UNS -->
+  <section class="section about" id="ueber-uns">
+    <div class="about-art reveal" aria-hidden="true">
+      <svg viewBox="0 0 400 400"><path data-blob data-seed="10" data-cx="200" data-cy="200" data-r="160" data-amp=".2" fill="var(--sage)" opacity=".9"/>
+        <path data-blob data-seed="11" data-cx="200" data-cy="200" data-r="110" data-amp=".25" fill="var(--cream)" opacity=".95"/></svg>
+      <img src="assets/logo.png" alt="" class="about-logo">
+    </div>
+    <div class="about-text reveal">
+      <p class="eyebrow">Über lernfunke</p>
+      <h2>Kleine Funken. Große Neugier.</h2>
+      <p>Wir glauben, dass Lernen am besten funktioniert, wenn es Freude macht. Darum gestalten wir Ausmalbilder, Kinderbücher und Lernmaterial mit warmen Farben, runden Formen und ganz viel Herz.</p>
+      <p>Jedes Produkt entsteht mit dem Ziel, Kinder zum Staunen, Entdecken und Kreativsein einzuladen – für zu Hause, in der Kita oder in der Schule.</p>
+      <ul class="ticks">
+        <li>Kindgerecht & liebevoll illustriert</li>
+        <li>Druckfreundlich im A4-Format</li>
+        <li>Für private & pädagogische Nutzung</li>
+      </ul>
+    </div>
+  </section>
+
+  <!-- FAQ -->
+  <section class="section faq" id="faq">
+    <div class="section-head reveal">
+      <p class="eyebrow">Gut zu wissen</p>
+      <h2>Häufige Fragen</h2>
+    </div>
+    <div class="faq-list reveal">
+      <details><summary>Wie erhalte ich meine Produkte?</summary><p>Direkt nach dem Kauf bekommst du eine E-Mail mit dem Download-Link. Du kannst die PDFs auf jedem Gerät speichern.</p></details>
+      <details><summary>Darf ich die Dateien mehrfach ausdrucken?</summary><p>Ja, für den privaten Gebrauch und in deiner eigenen Familie oder Gruppe darfst du so oft ausdrucken, wie du möchtest. Weitergabe und Weiterverkauf der Dateien sind nicht erlaubt.</p></details>
+      <details><summary>Welches Format haben die Downloads?</summary><p>Alle Produkte sind druckfertige PDFs im Format DIN A4.</p></details>
+      <details><summary>Kann ich ein Produkt zurückgeben?</summary><p>Da es sich um digitale Inhalte handelt, ist ein Widerruf nach dem Download ausgeschlossen. Bei Problemen mit der Datei helfen wir dir selbstverständlich weiter.</p></details>
+    </div>
+  </section>
+
+  <!-- NEWSLETTER -->
+  <section class="newsletter reveal">
+    <svg class="nl-blob" viewBox="0 0 600 300" preserveAspectRatio="none" aria-hidden="true"><path data-blob data-seed="12" data-cx="300" data-cy="150" data-r="140" data-amp=".12" data-stretch="2.1" fill="var(--terra)"/></svg>
+    <div class="nl-inner">
+      <h2>Freebie gefällig?</h2>
+      <p>Trag dich ein und erhalte ein kostenloses Ausmalbild plus Neuigkeiten von lernfunke.</p>
+      <form id="nlForm" class="nl-form">
+        <input type="email" required placeholder="Deine E-Mail-Adresse" aria-label="E-Mail-Adresse">
+        <button class="btn btn-light" type="submit">Anmelden</button>
+      </form>
+    </div>
+  </section>
+</main>
+
+<footer class="footer">
+  <div class="foot-brand">
+    <img src="assets/logo.png" alt="lernfunke Logo" class="foot-logo">
+  </div>
+  <nav class="foot-links">
+    <a href="#shop">Shop</a><a href="#faq">FAQ</a>
+    <a href="#" data-legal="Impressum">Impressum</a>
+    <a href="#" data-legal="Datenschutz">Datenschutz</a>
+    <a href="#" data-legal="AGB & Widerruf">AGB & Widerruf</a>
+  </nav>
+  <p class="copy">© <span id="year"></span> lernfunke · Mit 💛 gemacht</p>
+</footer>
+
+<!-- Warenkorb -->
+<div class="overlay" id="overlay"></div>
+<aside class="drawer" id="drawer" aria-label="Warenkorb" aria-hidden="true">
+  <div class="drawer-head">
+    <h3>Dein Warenkorb</h3>
+    <button class="icon-btn" id="cartClose" aria-label="Schließen">✕</button>
+  </div>
+  <ul class="cart-items" id="cartItems"></ul>
+  <div class="drawer-foot">
+    <div class="total"><span>Gesamt</span><strong id="cartTotal">0,00 €</strong></div>
+    <p class="mini">Inkl. MwSt. · Digitale Ware, Versand entfällt</p>
+    <button class="btn btn-primary wide" id="checkout">Zur Kasse</button>
+  </div>
+</aside>
+
+<div class="toast" id="toast" role="status" aria-live="polite"></div>
+<div class="modal" id="modal" hidden>
+  <div class="modal-box">
+    <h3 id="modalTitle"></h3>
+    <p id="modalText"></p>
+    <button class="btn btn-primary" id="modalClose">Okay</button>
+  </div>
+</div>
+
+<script src="script.js"></script>
+</body>
+</html>
