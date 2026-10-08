@@ -25,8 +25,8 @@ const PRODUCTS = [
   { id: "tiere", cat: "ausmalbilder", title: "Ausmalbilder Tierwelt", desc: "30 liebevolle Motive von Fuchs bis Elefant – ideal für kleine Künstler ab 3 Jahren.", price: 4.9, pages: "30 Seiten", emoji: "🦊", color: "#eab76a", checkoutUrl: "" },
   { id: "dinos", cat: "ausmalbilder", title: "Ausmalbilder Dinos", desc: "Brüllend gute Dino-Motive zum Ausmalen und Entdecken.", price: 4.9, pages: "25 Seiten", emoji: "🦕", color: "#8a8f72", checkoutUrl: "" },
   { id: "weltraum", cat: "ausmalbilder", title: "Ausmalbilder Weltraum", desc: "Raketen, Planeten und freundliche Sterne für Nachwuchs-Astronauten.", price: 4.9, pages: "28 Seiten", emoji: "🚀", color: "#d4875a", badge: "Neu", checkoutUrl: "" },
-  { id: "funke-buch", cat: "buecher", title: "Der kleine Funke", desc: "Ein Kinderbuch über Mut, Neugier und den Funken, der in jedem von uns steckt.", price: 7.9, pages: "32 Seiten · Vorlesebuch", emoji: "✨", color: "#eab76a", badge: "Bestseller", checkoutUrl: "" },
-  { id: "wald-buch", cat: "buecher", title: "Mias Waldabenteuer", desc: "Mia entdeckt den Wald und findet neue Freunde – mit Mitmach-Seiten.", price: 7.9, pages: "36 Seiten · Vorlesebuch", emoji: "🌲", color: "#8a8f72", checkoutUrl: "" },
+  { id: "monsterich-dunkel", cat: "buecher", title: "Monsterich hat Angst im Dunkeln", desc: "Das kleine Grasmonster entdeckt, dass ein bisschen Angst dazugehört – und dass Mut zu zweit leichter ist.", price: 7.9, pages: "34 Seiten · Bilderbuch", image: "assets/monsterich-dunkel.jpg", color: "#2f3b66", badge: "Bestseller", checkoutUrl: "" },
+  { id: "monsterich-bauch", cat: "buecher", title: "Monsterich und das Grummeln im Bauch", desc: "Monsterich und sein Freund Pusti gehen einem lauten Grummeln auf den Grund.", price: 7.9, pages: "34 Seiten · Bilderbuch", image: "assets/monsterich-bauch.jpg", color: "#8a8f72", checkoutUrl: "" },
   { id: "buchstaben", cat: "lernen", title: "Buchstaben-Übungsblätter", desc: "Schwungübungen und Buchstaben spielerisch lernen – Vorschule und 1. Klasse.", price: 5.9, pages: "40 Seiten", emoji: "✏️", color: "#d4875a", checkoutUrl: "" },
   { id: "zahlen", cat: "lernen", title: "Zahlen-Rätselheft", desc: "Zählen, Zuordnen und Knobeln mit Zahlen von 1 bis 20.", price: 5.9, pages: "32 Seiten", emoji: "🔢", color: "#eab76a", checkoutUrl: "" },
   { id: "bundle", cat: "bundles", title: "Funken-Bundle", desc: "Alle Ausmalbilder-Sets und beide Kinderbücher zum Vorteilspreis.", price: 24.9, oldPrice: 38.2, pages: "6 Produkte", emoji: "🎁", color: "#8a8f72", badge: "Spare 35 %", checkoutUrl: "" },
@@ -107,14 +107,14 @@ function renderGrid() {
     const catLabel = CATEGORIES.find((c) => c.id === p.cat).label;
     return `
     <article class="card" style="animation-delay:${i * 60}ms">
-      <div class="cover" style="background:${p.color}22">
+      <div class="cover ${p.image ? "has-img" : ""}" style="background:${p.color}22">
         <span class="tag">${catLabel}</span>
         ${p.badge ? `<span class="badge">${p.badge}</span>` : ""}
-        <svg viewBox="0 0 300 225" aria-hidden="true">
-          <path data-blob data-seed="${(i % 9) + 1}" data-cx="150" data-cy="112" data-r="82" data-amp=".2" fill="${p.color}" opacity=".35"/>
-          <path data-blob data-seed="${(i % 9) + 4}" data-cx="150" data-cy="112" data-r="62" data-amp=".24" fill="${p.color}"/>
+        ${p.image ? `<img src="${p.image}" alt="Cover: ${p.title}" loading="lazy">` : `<svg viewBox="0 0 300 300" aria-hidden="true">
+          <path data-blob data-seed="${(i % 9) + 1}" data-cx="150" data-cy="150" data-r="95" data-amp=".2" fill="${p.color}" opacity=".35"/>
+          <path data-blob data-seed="${(i % 9) + 4}" data-cx="150" data-cy="150" data-r="72" data-amp=".24" fill="${p.color}"/>
         </svg>
-        <span class="emoji" aria-hidden="true">${p.emoji}</span>
+        <span class="emoji" aria-hidden="true">${p.emoji}</span>`}
       </div>
       <div class="card-body">
         <h3>${p.title}</h3>
@@ -145,7 +145,7 @@ function renderCart() {
   $("#cartItems").innerHTML = items.length
     ? items.map((p) => `
       <li class="ci">
-        <div class="ci-ico" style="background:${p.color}33">${p.emoji}</div>
+        <div class="ci-ico" style="background:${p.color}33">${p.image ? `<img src="${p.image}" alt="">` : p.emoji}</div>
         <div><b>${p.title}</b><small>${p.pages} · PDF</small></div>
         <div class="ci-right"><div>${fmt(p.price)}</div><button class="ci-rm" data-rm="${p.id}">Entfernen</button></div>
       </li>`).join("")
