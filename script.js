@@ -243,69 +243,81 @@ renderCart();
 registerBlobs();
 if (!reduceMotion) requestAnimationFrame(loop);
 
-
 /* ============================================================
-   Scroll-Geschichte: gepinnte Bühne mit GSAP ScrollTrigger.
-   Wörter schieben sich unscharf durchs Bild, die Bilder (in
-   morphender Blob-Maske) drehen und wechseln, die Farbe läuft über.
+   Monsterich wandert beim Scrollen: pro Abschnitt eine Station
+   (Position, Größe, Neigung, Blickrichtung). Dazwischen wird
+   weich überblendet, mit etwas Trägheit.
    ============================================================ */
-(function initStage() {
-  if (!window.gsap || !window.ScrollTrigger || reduceMotion) {
-    document.documentElement.classList.add("no-gsap");
-    return;
+(function monsterich() {
+  const el = $("#mon");
+  if (!el) return;
+  const BASE_H = 400;
+  let stops = [];
+  let cur = null;
+
+  const mid = (n) => { const r = n.getBoundingClientRect(); return { x: r.left + r.width / 2, y: r.top + scrollY + r.height / 2, w: r.width, h: r.height, top: r.top + scrollY }; };
+
+  function build() {
+    const vw = innerWidth, vh = innerHeight, small = vw < 860;
+    const maxS = Math.max(0, document.documentElement.scrollHeight - vh);
+    const list = [];
+    const add = (s, x, y, h, rot, flip) => list.push({ s: Math.min(Math.max(0, s), maxS), x, y, h, rot, flip });
+
+    const hero = mid($(".hero-art"));
+    add(0, hero.x, Math.min(hero.y, vh * 0.85), Math.min(hero.w * 0.86, vh * 0.72), 0, 1);
+
+    const shop = mid($("#shop"));
+    add(shop.top - vh * 0.25, small ? vw * 0.86 : vw * 0.06, vh * (small ? 0.84 : 0.76), small ? 100 : 190, 8, 1);
+
+    const steps = mid($("#so-gehts"));
+    add(steps.y - vh * 0.5, small ? vw * 0.13 : vw * 0.91, vh * (small ? 0.84 : 0.88), small ? 100 : 190, -6, -1);
+
+    const about = mid($(".about-art"));
+    add(about.y - vh * 0.5, about.x, vh * 0.5 + about.h * 0.04, about.w * (small ? 0.78 : 0.82), 0, 1);
+
+    const faq = mid($("#faq"));
+    add(faq.y - vh * 0.5, small ? vw * 0.97 : vw * 0.985, vh * (small ? 0.82 : 0.6), small ? 120 : 250, -16, -1);
+
+    const nl = mid($(".newsletter"));
+    add(nl.y - vh * 0.45, small ? vw * 0.84 : vw * 0.17, vh * (small ? 0.84 : 0.52), small ? 110 : 270, 4, 1);
+
+    add(maxS, vw * 0.9, vh - (small ? 120 : 80), small ? 80 : 130, 0, 1);
+
+    stops = list.reduce((acc, p) => { if (!acc.length || p.s > acc[acc.length - 1].s + 1) acc.push(p); return acc; }, []);
   }
-  gsap.registerPlugin(ScrollTrigger);
 
-  const scenes = [
-    { bg: "#14204a", word: "#f3c97a", blob: "#f3c97a" },
-    { bg: "#9fd4f0", word: "#ffffff", blob: "#ffffff" },
-    { bg: "#f2d29a", word: "#d4875a", blob: "#ffffff" },
-  ];
-  const out = { xPercent: -135, rotate: -14, scale: 0.8, filter: "blur(14px)", opacity: 0 };
-  const into = { xPercent: 135, rotate: 14, scale: 0.8, filter: "blur(14px)", opacity: 0 };
-  const rest = { xPercent: 0, rotate: 0, scale: 1, filter: "blur(0px)", opacity: 1 };
+  const smooth = (t) => t * t * (3 - 2 * t);
+  const lerp = (a, b, t) => a + (b - a) * t;
 
-  gsap.set(".f2, .f3", into);
-  gsap.set(".w2, .w3", { xPercent: 140, filter: "blur(18px)" });
-  gsap.set(".c2, .c3", { opacity: 0, y: 24, pointerEvents: "none" });
-  gsap.set(".stage", { backgroundColor: scenes[0].bg });
-
-  const dots = [...document.querySelectorAll(".dots li")];
-  const tl = gsap.timeline({
-    defaults: { ease: "power2.inOut", duration: 1 },
-    scrollTrigger: {
-      trigger: "#stage", start: "top top", end: "+=320%",
-      pin: true, scrub: 0.7, anticipatePin: 1,
-      onUpdate(self) {
-        const i = self.progress < 0.3 ? 0 : self.progress < 0.7 ? 1 : 2;
-        dots.forEach((d, k) => d.classList.toggle("on", k === i));
-        document.querySelector(".scroll-hint").style.opacity = self.progress > 0.03 ? 0 : 1;
-      },
-    },
-  });
-
-  // Kleine Bewegung, solange Szene 1 steht
-  tl.to(".f1", { scale: 1.05, rotate: -2, duration: 0.8, ease: "none" }, 0);
-
-  function swap(at, from, to, a, b) {
-    tl.to(`.f${from}`, { ...out, rotate: -14, scale: 0.8, filter: "blur(14px)", opacity: 0, xPercent: -135 }, at)
-      .to(`.w${from}`, { xPercent: -140, filter: "blur(18px)" }, at)
-      .to(`.c${from}`, { opacity: 0, y: -16, pointerEvents: "none", duration: 0.4 }, at)
-      .to(`.f${to}`, rest, at)
-      .to(`.w${to}`, { xPercent: 0, filter: "blur(0px)" }, at)
-      .to(`.c${to}`, { opacity: 1, y: 0, pointerEvents: "auto", duration: 0.4 }, at + 0.6)
-      .to(".stage", { backgroundColor: scenes[to - 1].bg }, at)
-      .to(`.w${to}`, { color: scenes[to - 1].word, duration: 0.01 }, at)
-      .to("#sb1, #sb2", { attr: { fill: scenes[to - 1].blob } }, at);
+  function target(S) {
+    if (S <= stops[0].s) return stops[0];
+    for (let i = 0; i < stops.length - 1; i++) {
+      const a = stops[i], b = stops[i + 1];
+      if (S <= b.s) {
+        const t = smooth(Math.min(1, Math.max(0, ((S - a.s) / (b.s - a.s) - 0.18) / 0.64)));
+        return { x: lerp(a.x, b.x, t), y: lerp(a.y, b.y, t), h: lerp(a.h, b.h, t), rot: lerp(a.rot, b.rot, t), flip: lerp(a.flip, b.flip, t) };
+      }
+    }
+    return stops[stops.length - 1];
   }
-  swap(1.2, 1, 2);
-  swap(3.2, 2, 3);
-  tl.to(".f3", { scale: 1.05, rotate: 2, duration: 0.8, ease: "none" }, 4.4);
-  tl.to({}, { duration: 0.6 }, 4.6); // kurzes Halten am Ende
 
-  // „Zum Buch“ schaltet im Shop direkt auf Kinderbücher
-  document.querySelectorAll("[data-goto]").forEach((a) =>
-    a.addEventListener("click", () => { activeCat = a.dataset.goto; renderFilters(); renderGrid(); })
-  );
-  addEventListener("load", () => ScrollTrigger.refresh());
+  function frame() {
+    const t = target(scrollY);
+    if (!cur) { cur = { ...t }; el.classList.add("ready"); }
+    const k = reduceMotion ? 1 : 0.13;
+    for (const key of ["x", "y", "h", "rot", "flip"]) cur[key] = lerp(cur[key], t[key], k);
+    const lean = reduceMotion ? 0 : Math.max(-10, Math.min(10, (t.x - cur.x) * 0.05));
+    const sc = cur.h / BASE_H;
+    el.style.transform = `translate3d(${cur.x - 180}px, ${cur.y - BASE_H / 2}px, 0) rotate(${cur.rot + lean}deg) scale(${cur.flip * sc}, ${sc})`;
+    requestAnimationFrame(frame);
+  }
+
+  let timer;
+  const rebuild = () => { clearTimeout(timer); timer = setTimeout(build, 120); };
+  build();
+  addEventListener("resize", rebuild);
+  addEventListener("load", build);
+  if (document.fonts && document.fonts.ready) document.fonts.ready.then(build);
+  if ("ResizeObserver" in window) new ResizeObserver(rebuild).observe(document.body);
+  requestAnimationFrame(frame);
 })();
