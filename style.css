@@ -278,3 +278,43 @@ details p { color: var(--ink-soft); padding-bottom: 8px; }
 
 /* Bei echten Covern: Labels unten, damit der Titel im Bild frei bleibt */
 .cover.has-img .tag, .cover.has-img .badge { top: auto; bottom: 14px; }
+
+/* ---------- Scroll-Geschichte (gepinnte Bühne) ---------- */
+.showcase { position: relative; }
+.stage {
+  position: relative; height: 100vh; height: 100svh; overflow: hidden;
+  background: #14204a; color: #fff;
+  display: grid; place-items: center;
+}
+.clip-defs { position: absolute; }
+.stage-blobs { position: absolute; inset: 0; width: 100%; height: 100%; }
+.words { position: absolute; inset: 0; z-index: 1; display: grid; place-items: center; pointer-events: none; }
+.word {
+  grid-area: 1 / 1; white-space: nowrap;
+  font: 600 min(calc(var(--k) * 1vw), calc(var(--c, 34) * 1svh)) / 1 var(--font-h);
+  letter-spacing: -.02em; color: #f3c97a; will-change: transform, filter;
+  transform: translateY(-9svh);
+}
+.frames { position: absolute; inset: 0; z-index: 2; display: grid; place-items: center; transform: translateY(-3svh); }
+.frame { grid-area: 1 / 1; margin: 0; width: min(64vw, 44svh); aspect-ratio: 1; will-change: transform, filter, opacity; filter: drop-shadow(0 24px 30px rgba(0, 0, 0, .35)); }
+.frame img { width: 100%; height: 100%; object-fit: cover; }
+.captions { position: absolute; z-index: 3; left: 0; right: 0; bottom: max(18px, 4svh); display: grid; justify-items: center; padding: 0 16px; }
+.cap {
+  grid-area: 1 / 1; width: min(560px, 100%);
+  background: rgba(255, 253, 247, .94); color: var(--ink);
+  border-radius: 28px; padding: 18px 24px 20px; text-align: center;
+  box-shadow: 0 14px 40px rgba(0, 0, 0, .25);
+}
+.cap h2 { font-size: clamp(1.25rem, 3.4vw, 1.8rem); margin-bottom: .25em; }
+.cap p { margin: 0 0 12px; color: var(--ink-soft); font-size: .98rem; }
+.cap .btn { padding: 11px 24px; }
+.dots { position: absolute; z-index: 3; right: 18px; top: 50%; transform: translateY(-50%); list-style: none; margin: 0; padding: 0; display: grid; gap: 10px; }
+.dots li { width: 10px; height: 10px; border-radius: 50%; background: rgba(255, 255, 255, .4); transition: .3s; }
+.dots li.on { background: #fff; transform: scale(1.5); }
+.scroll-hint { position: absolute; z-index: 3; top: 92px; left: 0; right: 0; text-align: center; margin: 0; font: 600 .85rem var(--font-h); letter-spacing: .14em; text-transform: uppercase; color: rgba(255, 255, 255, .8); transition: opacity .4s; }
+
+/* Ohne Animation: nur die erste Szene zeigen */
+.no-gsap .stage { height: auto; min-height: 100svh; padding: 100px 0 40px; }
+.no-gsap .f2, .no-gsap .f3, .no-gsap .w2, .no-gsap .w3, .no-gsap .c2, .no-gsap .c3, .no-gsap .dots, .no-gsap .scroll-hint { display: none; }
+
+@media (max-width: 860px) { .dots { right: 10px; } .scroll-hint { top: 84px; } }

@@ -61,6 +61,7 @@ function registerBlobs(root = document) {
 
 function blobPath(b, t) {
   const pts = [];
+  const f = b.r < 5 ? 4 : 1;
   for (let i = 0; i < N; i++) {
     const a = (i / N) * Math.PI * 2;
     const p = b.seed * 1.7 + i * 1.3;
@@ -69,12 +70,12 @@ function blobPath(b, t) {
     pts.push([b.cx + Math.cos(a) * rad * b.stretch, b.cy + Math.sin(a) * rad]);
   }
   // Catmull-Rom → kubische Bézier (geschlossen)
-  let d = `M${pts[0][0].toFixed(1)},${pts[0][1].toFixed(1)}`;
+  let d = `M${pts[0][0].toFixed(f)},${pts[0][1].toFixed(f)}`;
   for (let i = 0; i < N; i++) {
     const p0 = pts[(i - 1 + N) % N], p1 = pts[i], p2 = pts[(i + 1) % N], p3 = pts[(i + 2) % N];
     const c1 = [p1[0] + (p2[0] - p0[0]) / 6, p1[1] + (p2[1] - p0[1]) / 6];
     const c2 = [p2[0] - (p3[0] - p1[0]) / 6, p2[1] - (p3[1] - p1[1]) / 6];
-    d += `C${c1[0].toFixed(1)},${c1[1].toFixed(1)} ${c2[0].toFixed(1)},${c2[1].toFixed(1)} ${p2[0].toFixed(1)},${p2[1].toFixed(1)}`;
+    d += `C${c1[0].toFixed(f)},${c1[1].toFixed(f)} ${c2[0].toFixed(f)},${c2[1].toFixed(f)} ${p2[0].toFixed(f)},${p2[1].toFixed(f)}`;
   }
   return d + "Z";
 }
@@ -241,3 +242,70 @@ renderGrid();
 renderCart();
 registerBlobs();
 if (!reduceMotion) requestAnimationFrame(loop);
+
+
+/* ============================================================
+   Scroll-Geschichte: gepinnte Bühne mit GSAP ScrollTrigger.
+   Wörter schieben sich unscharf durchs Bild, die Bilder (in
+   morphender Blob-Maske) drehen und wechseln, die Farbe läuft über.
+   ============================================================ */
+(function initStage() {
+  if (!window.gsap || !window.ScrollTrigger || reduceMotion) {
+    document.documentElement.classList.add("no-gsap");
+    return;
+  }
+  gsap.registerPlugin(ScrollTrigger);
+
+  const scenes = [
+    { bg: "#14204a", word: "#f3c97a", blob: "#f3c97a" },
+    { bg: "#9fd4f0", word: "#ffffff", blob: "#ffffff" },
+    { bg: "#f2d29a", word: "#d4875a", blob: "#ffffff" },
+  ];
+  const out = { xPercent: -135, rotate: -14, scale: 0.8, filter: "blur(14px)", opacity: 0 };
+  const into = { xPercent: 135, rotate: 14, scale: 0.8, filter: "blur(14px)", opacity: 0 };
+  const rest = { xPercent: 0, rotate: 0, scale: 1, filter: "blur(0px)", opacity: 1 };
+
+  gsap.set(".f2, .f3", into);
+  gsap.set(".w2, .w3", { xPercent: 140, filter: "blur(18px)" });
+  gsap.set(".c2, .c3", { opacity: 0, y: 24, pointerEvents: "none" });
+  gsap.set(".stage", { backgroundColor: scenes[0].bg });
+
+  const dots = [...document.querySelectorAll(".dots li")];
+  const tl = gsap.timeline({
+    defaults: { ease: "power2.inOut", duration: 1 },
+    scrollTrigger: {
+      trigger: "#stage", start: "top top", end: "+=320%",
+      pin: true, scrub: 0.7, anticipatePin: 1,
+      onUpdate(self) {
+        const i = self.progress < 0.3 ? 0 : self.progress < 0.7 ? 1 : 2;
+        dots.forEach((d, k) => d.classList.toggle("on", k === i));
+        document.querySelector(".scroll-hint").style.opacity = self.progress > 0.03 ? 0 : 1;
+      },
+    },
+  });
+
+  // Kleine Bewegung, solange Szene 1 steht
+  tl.to(".f1", { scale: 1.05, rotate: -2, duration: 0.8, ease: "none" }, 0);
+
+  function swap(at, from, to, a, b) {
+    tl.to(`.f${from}`, { ...out, rotate: -14, scale: 0.8, filter: "blur(14px)", opacity: 0, xPercent: -135 }, at)
+      .to(`.w${from}`, { xPercent: -140, filter: "blur(18px)" }, at)
+      .to(`.c${from}`, { opacity: 0, y: -16, pointerEvents: "none", duration: 0.4 }, at)
+      .to(`.f${to}`, rest, at)
+      .to(`.w${to}`, { xPercent: 0, filter: "blur(0px)" }, at)
+      .to(`.c${to}`, { opacity: 1, y: 0, pointerEvents: "auto", duration: 0.4 }, at + 0.6)
+      .to(".stage", { backgroundColor: scenes[to - 1].bg }, at)
+      .to(`.w${to}`, { color: scenes[to - 1].word, duration: 0.01 }, at)
+      .to("#sb1, #sb2", { attr: { fill: scenes[to - 1].blob } }, at);
+  }
+  swap(1.2, 1, 2);
+  swap(3.2, 2, 3);
+  tl.to(".f3", { scale: 1.05, rotate: 2, duration: 0.8, ease: "none" }, 4.4);
+  tl.to({}, { duration: 0.6 }, 4.6); // kurzes Halten am Ende
+
+  // „Zum Buch“ schaltet im Shop direkt auf Kinderbücher
+  document.querySelectorAll("[data-goto]").forEach((a) =>
+    a.addEventListener("click", () => { activeCat = a.dataset.goto; renderFilters(); renderGrid(); })
+  );
+  addEventListener("load", () => ScrollTrigger.refresh());
+})();
