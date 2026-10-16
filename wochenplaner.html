@@ -65,11 +65,14 @@ nav button[aria-selected="true"] { background: var(--accent); color: var(--accen
 form.add { display: flex; flex-direction: column; gap: 10px; }
 .row { display: flex; gap: 8px; flex-wrap: wrap; }
 .row > * { min-width: 0; }
-input[type=text], input[type=date], select {
+input[type=text], input[type=date], input[type=time], select {
   background: var(--bg); border: 1px solid var(--line); border-radius: 9px; padding: 10px 12px; min-height: 44px;
 }
 input[type=text] { flex: 1 1 200px; }
-select, input[type=date] { flex: 1 1 130px; }
+select, input[type=date], input[type=time] { flex: 1 1 130px; }
+details.panel summary { cursor: pointer; font-weight: 600; }
+details.panel .row { margin-top: 10px; }
+details.panel p { color: var(--muted); font-size: 14px; margin: 10px 0 0; }
 .primary { background: var(--accent); color: var(--accent-ink); border: 0; border-radius: 9px; padding: 10px 18px; font-weight: 600; min-height: 44px; }
 .ghost { background: transparent; border: 1px solid var(--line); border-radius: 9px; padding: 8px 12px; color: var(--muted); }
 .days { display: none; gap: 6px; flex-wrap: wrap; }
@@ -157,6 +160,8 @@ li.item .del:hover { background: var(--bg); }
           <option value="weekly">Wöchentlich</option>
         </select>
         <input type="date" id="tDate" aria-label="Datum">
+        <input type="time" id="tTime" aria-label="Uhrzeit (optional)">
+        <select id="tWho" aria-label="Für wen"></select>
       </div>
       <div class="days" id="tDays" aria-label="Wochentage">
         <label><input type="checkbox" value="1"><span>Mo</span></label>
@@ -182,6 +187,14 @@ li.item .del:hover { background: var(--bg); }
 
   <div class="chips" id="filters" aria-label="Bereiche filtern"></div>
   <main id="view" class="app" style="gap:16px"></main>
+  <details class="panel" id="peopleBox">
+    <summary>Zu zweit nutzen</summary>
+    <div class="row">
+      <input type="text" id="pn0" aria-label="Name Person 1" placeholder="Name Person 1">
+      <input type="text" id="pn1" aria-label="Name Person 2" placeholder="Name Person 2">
+    </div>
+    <p>Aufgaben lassen sich einer Person oder beiden zuweisen. Damit ihr beide denselben Plan seht und bearbeitet, teile diese Seite über „Teilen“ mit der zweiten Person und gib ihr mindestens die Rolle „Mitwirkender“. Änderungen erscheinen bei beiden automatisch.</p>
+  </details>
   <div class="sync" id="sync"></div>
 </div>
 <div id="toastHost"></div>
@@ -206,8 +219,9 @@ li.item .del:hover { background: var(--bg); }
   var DAYS_LONG = ['Sonntag', 'Montag', 'Dienstag', 'Mittwoch', 'Donnerstag', 'Freitag', 'Samstag'];
   var MONTHS = ['Januar', 'Februar', 'März', 'April', 'Mai', 'Juni', 'Juli', 'August', 'September', 'Oktober', 'November', 'Dezember'];
 
-  var state = { tasks: [], shop: [] };
-  var ui = { tab: 'heute', filter: null, weekOffset: 0 };
+  var DEF_PEOPLE = ['Ich', 'Partner'];
+  var state = { tasks: [], shop: [], people: DEF_PEOPLE.slice() };
+  var ui = { tab: 'heute', filter: null, who: null, weekOffset: 0 };
   var db = null, docRef = null, writing = false, pending = false;
   var LS = 'wochenplaner-v1';
 
@@ -239,7 +253,12 @@ li.item .del:hover { background: var(--bg); }
     if (t.rep === 'weekly') return (t.days || []).slice().sort(function (a, b) { return ((a + 6) % 7) - ((b + 6) % 7); }).map(function (n) { return DAYS[n]; }).join(' ');
     return '';
   }
-  function visible(t) { return !ui.filter || t.cat === ui.filter; }
+  function visible(t) {
+    if (ui.filter && t.cat !== ui.filter) return false;
+    if (ui.who && t.who && t.who !== 'both' && t.who !== ui.who) return false;
+    return true;
+  }
+  function whoName(t) { return t.who === 'a' ? state.people[0] : t.who === 'b' ? state.people[1] : ''; }
 
   /* ---------- Speichern ---------- */
   function persistLocal() { try { localStorage.setItem(LS, JSON.stringify(state)); } catch (e) {} }
@@ -248,7 +267,7 @@ li.item .del:hover { background: var(--bg); }
     if (!docRef) return;
     if (writing) { pending = true; return; }
     writing = true;
-    docRef.set({ tasks: state.tasks, shop: state.shop, updated: Date.now() }).then(function () {
+    docRef.set({ tasks: state.tasks, shop: state.shop, people: state.people, updated: Date.now() }).then(function () {
       $('sync').textContent = 'Gespeichert';
     }).catch(function () {
       $('sync').textContent = 'Speichern in der Cloud fehlgeschlagen. Die Daten bleiben in diesem Browser.';
@@ -263,7 +282,10 @@ li.item .del:hover { background: var(--bg); }
   function itemHtml(t, d, opts) {
     opts = opts || {};
     var done = isDone(t, d);
-    var meta = [catOf(t.cat).name];
+    var meta = [];
+    if (t.time) meta.push(t.time + ' Uhr');
+    meta.push(catOf(t.cat).name);
+    if (whoName(t)) meta.push(whoName(t));
     if (t.rep !== 'none') meta.push(repText(t));
     else if (opts.showDate && t.date) meta.push(short(t.date));
     return '<li class="item' + (done ? ' done' : '') + '" style="--c:var(--c-' + esc(t.cat) + ')">' +
@@ -275,7 +297,13 @@ li.item .del:hover { background: var(--bg); }
     if (!items.length) return '';
     return '<section class="group"><h2 class="' + (cls || '') + '">' + title + ' <small>' + sub + '</small></h2><ul>' + items.join('') + '</ul></section>';
   }
-  function sortDone(list, d) { return list.slice().sort(function (a, b) { return (isDone(a, d) ? 1 : 0) - (isDone(b, d) ? 1 : 0); }); }
+  function sortDone(list, d) {
+    return list.slice().sort(function (a, b) {
+      var x = (isDone(a, d) ? 1 : 0) - (isDone(b, d) ? 1 : 0);
+      if (x) return x;
+      return (a.time || '99:99') < (b.time || '99:99') ? -1 : (a.time || '99:99') > (b.time || '99:99') ? 1 : 0;
+    });
+  }
 
   function renderHeute() {
     var td = todayStr();
@@ -313,7 +341,7 @@ li.item .del:hover { background: var(--bg); }
       out += '<div class="day' + (ds === td ? ' today' : '') + '"><h3>' + DAYS_LONG[d.getDay()].slice(0, 2) + '<span>' + d.getDate() + '.' + (d.getMonth() + 1) + '.</span></h3>';
       if (!items.length) out += '<div class="none">Frei</div>';
       items.forEach(function (t) {
-        out += '<button class="mini' + (isDone(t, ds) ? ' done' : '') + '" style="--c:var(--c-' + esc(t.cat) + ')" data-act="toggle" data-id="' + t.id + '" data-d="' + ds + '">' + esc(t.title) + '</button>';
+        out += '<button class="mini' + (isDone(t, ds) ? ' done' : '') + '" style="--c:var(--c-' + esc(t.cat) + ')" data-act="toggle" data-id="' + t.id + '" data-d="' + ds + '">' + (t.time ? '<b>' + t.time + '</b> ' : '') + esc(t.title) + (whoName(t) ? ' <small>· ' + esc(whoName(t)) + '</small>' : '') + '</button>';
       });
       out += '</div>';
     }
@@ -363,7 +391,17 @@ li.item .del:hover { background: var(--bg); }
         return '<button class="chip" style="--c:var(--c-' + c.id + ')" aria-pressed="' + (ui.filter === c.id) + '" data-act="filter" data-id="' + c.id + '"><i></i>' + c.name + '</button>';
       }).join('');
     }
+    if (!shop) {
+      fh += '<span style="flex-basis:100%;height:0"></span><button class="chip" aria-pressed="' + !ui.who + '" data-act="who" data-id="">Alle Personen</button>' +
+        ['a', 'b'].map(function (w, i) {
+          return '<button class="chip" aria-pressed="' + (ui.who === w) + '" data-act="who" data-id="' + w + '">' + esc(state.people[i]) + '</button>';
+        }).join('');
+    }
     $('filters').innerHTML = fh;
+    var cur = $('tWho').value || 'both';
+    $('tWho').innerHTML = '<option value="both">Für beide</option><option value="a">' + esc(state.people[0]) + '</option><option value="b">' + esc(state.people[1]) + '</option>';
+    $('tWho').value = cur;
+    [0, 1].forEach(function (i) { if (document.activeElement !== $('pn' + i)) $('pn' + i).value = state.people[i]; });
     $('view').innerHTML = ui.tab === 'heute' ? renderHeute() : ui.tab === 'woche' ? renderWoche() : ui.tab === 'einkauf' ? renderEinkauf() : renderRoutinen();
   }
 
@@ -376,11 +414,11 @@ li.item .del:hover { background: var(--bg); }
   }
   function seed() {
     var td = todayStr();
-    var S = function (title, cat, rep, days) { return { id: uid(), title: title, cat: cat, rep: rep, days: days || [], date: td, done: false, doneOn: {} }; };
+    var S = function (title, cat, rep, days, time) { return { id: uid(), title: title, cat: cat, rep: rep, days: days || [], date: td, done: false, doneOn: {}, time: time || '', who: 'both' }; };
     change(function () {
       state.tasks = state.tasks.concat([
-        S('Sport (Laufen oder Gym)', 'sport', 'weekly', [1, 3, 5]),
-        S('Kita-/Schultasche packen', 'kinder', 'weekly', [0, 1, 2, 3, 4]),
+        S('Sport (Laufen oder Gym)', 'sport', 'weekly', [1, 3, 5], '18:30'),
+        S('Kita-/Schultasche packen', 'kinder', 'weekly', [0, 1, 2, 3, 4], '20:00'),
         S('Müll rausbringen', 'haushalt', 'weekly', [4]),
         S('Wäsche waschen', 'haushalt', 'weekly', [6]),
         S('Wocheneinkauf', 'besorgung', 'weekly', [6]),
@@ -408,6 +446,7 @@ li.item .del:hover { background: var(--bg); }
     else if (act === 'filter') { ui.filter = id || null; render(); }
     else if (act === 'wk') { var n = +b.dataset.n; ui.weekOffset = n === 0 ? 0 : ui.weekOffset + n; render(); }
     else if (act === 'seed') seed();
+    else if (act === 'who') { ui.who = id || null; render(); }
     else if (act === 'shoptoggle') change(function () { var s = state.shop.filter(function (x) { return x.id === id; })[0]; if (s) s.done = !s.done; });
     else if (act === 'shopdel') change(function () { state.shop = state.shop.filter(function (x) { return x.id !== id; }); });
     else if (act === 'clearshop') change(function () { state.shop = state.shop.filter(function (x) { return !x.done; }); });
@@ -434,8 +473,9 @@ li.item .del:hover { background: var(--bg); }
     var rep = $('tRep').value;
     var days = Array.prototype.slice.call(document.querySelectorAll('#tDays input:checked')).map(function (i) { return +i.value; });
     if (rep === 'weekly' && !days.length) days = [parse($('tDate').value || todayStr()).getDay()];
-    var t = { id: uid(), title: title, cat: $('tCat').value, rep: rep, days: days, date: $('tDate').value || (rep === 'none' ? null : todayStr()), done: false, doneOn: {} };
+    var t = { id: uid(), title: title, cat: $('tCat').value, rep: rep, days: days, date: $('tDate').value || (rep === 'none' ? null : todayStr()), done: false, doneOn: {}, time: $('tTime').value || '', who: $('tWho').value };
     change(function () { state.tasks.push(t); });
+    $('tTime').value = '';
     $('tTitle').value = ''; $('tTitle').focus();
   });
   $('sugg').innerHTML = SUGG.map(function (s) { return '<button type="button" data-act="sugg" data-t="' + esc(s) + '">+ ' + esc(s) + '</button>'; }).join('');
@@ -443,10 +483,17 @@ li.item .del:hover { background: var(--bg); }
     e.preventDefault(); addShop($('sTitle').value); $('sTitle').value = ''; $('sTitle').focus();
   });
 
+  [0, 1].forEach(function (i) {
+    $('pn' + i).addEventListener('change', function () {
+      var v = this.value.trim() || DEF_PEOPLE[i];
+      change(function () { state.people[i] = v; });
+    });
+  });
+
   /* ---------- Start ---------- */
   try {
     var saved = localStorage.getItem(LS);
-    if (saved) { var p = JSON.parse(saved); state = { tasks: p.tasks || [], shop: p.shop || [] }; }
+    if (saved) { var p = JSON.parse(saved); state = { tasks: p.tasks || [], shop: p.shop || [], people: p.people || DEF_PEOPLE.slice() }; }
     var tab = sessionStorage.getItem(LS + '-tab'); if (tab) ui.tab = tab;
   } catch (e) {}
   render();
@@ -459,7 +506,7 @@ li.item .del:hover { background: var(--bg); }
         if (snap.metadata.hasPendingWrites || writing) return;
         if (snap.exists) {
           var v = snap.data();
-          state = { tasks: v.tasks || [], shop: v.shop || [] };
+          state = { tasks: v.tasks || [], shop: v.shop || [], people: v.people || DEF_PEOPLE.slice() };
           persistLocal(); render();
         } else if (state.tasks.length || state.shop.length) { save(); }
         $('sync').textContent = 'Synchronisiert über alle Geräte';
