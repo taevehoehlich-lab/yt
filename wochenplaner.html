@@ -57,7 +57,7 @@ h1 { font-size: 34px; font-weight: 800; line-height: 1.05; }
 .bar { height: 8px; border-radius: 99px; background: var(--line); overflow: hidden; }
 .bar > i { display: block; height: 100%; background: var(--ok); border-radius: 99px; transition: width .3s; }
 
-nav { display: grid; grid-template-columns: repeat(4, 1fr); gap: 4px; padding: 4px; background: var(--surface); border: 1px solid var(--line); border-radius: 12px; }
+nav { display: grid; grid-template-columns: repeat(auto-fit, minmax(84px, 1fr)); gap: 4px; padding: 4px; background: var(--surface); border: 1px solid var(--line); border-radius: 12px; }
 nav button { border: 0; background: transparent; padding: 10px 6px; border-radius: 9px; font-weight: 600; color: var(--muted); }
 nav button[aria-selected="true"] { background: var(--accent); color: var(--accent-ink); }
 
@@ -126,6 +126,29 @@ li.item .del:hover { background: var(--bg); }
 .toast { position: fixed; left: 50%; transform: translateX(-50%); bottom: calc(20px + env(safe-area-inset-bottom, 0px)); background: var(--ink); color: var(--bg); padding: 10px 14px; border-radius: 10px; display: flex; gap: 12px; align-items: center; max-width: calc(100% - 32px); z-index: 20; }
 .toast button { background: transparent; border: 0; color: var(--bg); font-weight: 600; text-decoration: underline; }
 .sync { font-size: 12px; color: var(--muted); text-align: center; }
+.cal { display: grid; grid-template-columns: repeat(7, minmax(0, 1fr)); gap: 4px; }
+.cal .dow { font-size: 12px; color: var(--muted); text-align: center; font-weight: 600; padding: 2px 0; }
+.cal .cell { --c: var(--c-privat); min-height: 84px; min-width: 0; background: var(--surface); border: 1px solid var(--line); border-radius: 8px; padding: 4px; display: flex; flex-direction: column; gap: 3px; text-align: left; overflow: hidden; }
+.cal .cell.out { opacity: .45; }
+.cal .cell.sel { box-shadow: 0 0 0 2px var(--ink); }
+.cal .n { font-size: 13px; font-weight: 600; font-variant-numeric: tabular-nums; width: 22px; height: 22px; display: grid; place-items: center; }
+.cal .cell.today .n { background: var(--accent); color: var(--accent-ink); border-radius: 99px; }
+.cal .ev { font-size: 11px; line-height: 1.25; padding: 1px 4px; border-radius: 4px; border-left: 3px solid var(--c); background: color-mix(in srgb, var(--c) 18%, var(--surface)); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.cal .ev.done { text-decoration: line-through; opacity: .6; }
+.cal .more { font-size: 11px; color: var(--muted); }
+.cal .dots { display: none; gap: 3px; flex-wrap: wrap; }
+.cal .dots i { width: 7px; height: 7px; border-radius: 50%; background: var(--c); }
+.dayhead { font-family: var(--font-display); font-size: 16px; margin: 0; }
+.bubble { padding: 10px 12px; border-radius: 12px; max-width: 92%; white-space: pre-wrap; overflow-wrap: anywhere; }
+.bubble.me { align-self: flex-end; background: var(--accent); color: var(--accent-ink); }
+.bubble.ai { align-self: flex-start; background: var(--surface); border: 1px solid var(--line); }
+.bubble.err { color: var(--warn); }
+.exchange { display: flex; flex-direction: column; gap: 6px; }
+@media (max-width: 560px) {
+  .cal .cell { min-height: 54px; }
+  .cal .ev, .cal .more { display: none; }
+  .cal .dots { display: flex; }
+}
 @media (max-width: 480px) { h1 { font-size: 28px; } }
 @media (prefers-reduced-motion: reduce) { .bar > i { transition: none; } }
 </style>
@@ -142,8 +165,10 @@ li.item .del:hover { background: var(--bg); }
   <nav role="tablist" aria-label="Ansicht">
     <button role="tab" data-tab="heute" aria-selected="true">Heute</button>
     <button role="tab" data-tab="woche" aria-selected="false">Woche</button>
+    <button role="tab" data-tab="kalender" aria-selected="false">Kalender</button>
     <button role="tab" data-tab="einkauf" aria-selected="false">Einkauf</button>
     <button role="tab" data-tab="routinen" aria-selected="false">Routinen</button>
+    <button role="tab" data-tab="assistent" id="assistTab" aria-selected="false">Assistent</button>
   </nav>
 
   <section class="panel" id="taskFormWrap">
@@ -185,6 +210,15 @@ li.item .del:hover { background: var(--bg); }
     </form>
   </section>
 
+  <section class="panel" id="chatWrap" hidden>
+    <form class="add" id="chatForm" autocomplete="off">
+      <div class="row">
+        <input type="text" id="cMsg" placeholder="Frag etwas zu euren Terminen …" aria-label="Frage an den Assistenten" required>
+        <button class="primary" id="cSend" type="submit">Fragen</button>
+      </div>
+    </form>
+  </section>
+
   <div class="chips" id="filters" aria-label="Bereiche filtern"></div>
   <main id="view" class="app" style="gap:16px"></main>
   <details class="panel" id="peopleBox">
@@ -221,7 +255,8 @@ li.item .del:hover { background: var(--bg); }
 
   var DEF_PEOPLE = ['Ich', 'Partner'];
   var state = { tasks: [], shop: [], people: DEF_PEOPLE.slice() };
-  var ui = { tab: 'heute', filter: null, who: null, weekOffset: 0 };
+  var ui = { tab: 'heute', filter: null, who: null, weekOffset: 0, monthOffset: 0, sel: todayStr() };
+  var sampleFn = null, chat = [], chatBusy = false;
   var db = null, docRef = null, writing = false, pending = false;
   var LS = 'wochenplaner-v1';
 
@@ -377,14 +412,95 @@ li.item .del:hover { background: var(--bg); }
     }).join('') + '</ul></section>';
   }
 
+  function renderKalender() {
+    $('progress').innerHTML = '';
+    var now = new Date();
+    var first = new Date(now.getFullYear(), now.getMonth() + ui.monthOffset, 1);
+    var start = addDays(first, -((first.getDay() + 6) % 7));
+    var td = todayStr(), month = first.getMonth();
+    var out = '<div class="weeknav"><button class="ghost" data-act="mo" data-n="-1" aria-label="Vorheriger Monat">‹</button><strong>' + MONTHS[month] + ' ' + first.getFullYear() + '</strong>' +
+      '<span><button class="ghost" data-act="mo" data-n="0">Heute</button> <button class="ghost" data-act="mo" data-n="1" aria-label="Nächster Monat">›</button></span></div>';
+    out += '<div class="cal">' + ['Mo', 'Di', 'Mi', 'Do', 'Fr', 'Sa', 'So'].map(function (n) { return '<div class="dow">' + n + '</div>'; }).join('');
+    var weeks = Math.ceil(((first.getDay() + 6) % 7 + new Date(first.getFullYear(), month + 1, 0).getDate()) / 7);
+    for (var i = 0; i < weeks * 7; i++) {
+      var d = addDays(start, i), ds = fmt(d);
+      var items = sortDone(state.tasks.filter(visible).filter(function (t) { return occursOn(t, ds); }), ds);
+      out += '<button class="cell' + (d.getMonth() !== month ? ' out' : '') + (ds === td ? ' today' : '') + (ds === ui.sel ? ' sel' : '') + '" data-act="day" data-d="' + ds + '" aria-label="' + d.getDate() + '. ' + MONTHS[d.getMonth()] + ', ' + items.length + ' Einträge"><span class="n">' + d.getDate() + '</span>';
+      items.slice(0, 3).forEach(function (t) {
+        out += '<span class="ev' + (isDone(t, ds) ? ' done' : '') + '" style="--c:var(--c-' + esc(t.cat) + ')">' + (t.time ? t.time + ' ' : '') + esc(t.title) + '</span>';
+      });
+      if (items.length > 3) out += '<span class="more">+' + (items.length - 3) + ' weitere</span>';
+      out += '<span class="dots">' + items.slice(0, 6).map(function (t) { return '<i style="--c:var(--c-' + esc(t.cat) + ')"></i>'; }).join('') + '</span></button>';
+    }
+    out += '</div>';
+    var sel = sortDone(state.tasks.filter(visible).filter(function (t) { return occursOn(t, ui.sel); }), ui.sel);
+    var sd = parse(ui.sel);
+    out += '<section class="group"><h2 class="dayhead">' + DAYS_LONG[sd.getDay()] + ', ' + sd.getDate() + '. ' + MONTHS[sd.getMonth()] + '</h2>' +
+      (sel.length ? '<ul style="margin-top:8px">' + sel.map(function (t) { return itemHtml(t, ui.sel); }).join('') + '</ul>' : '<p style="color:var(--muted)">Für diesen Tag ist nichts eingetragen. Oben kannst du einen Termin hinzufügen.</p>') + '</section>';
+    return out;
+  }
+
+  function whoLabel(t) { return t.who === 'a' ? state.people[0] : t.who === 'b' ? state.people[1] : 'beide'; }
+  function buildContext() {
+    var now = new Date();
+    var once = state.tasks.filter(function (t) { return t.rep === 'none'; });
+    var dated = once.filter(function (t) { return t.date; }).sort(function (a, b) { return a.date < b.date ? -1 : a.date > b.date ? 1 : 0; }).slice(-300);
+    var undated = once.filter(function (t) { return !t.date; });
+    var rec = state.tasks.filter(function (t) { return t.rep !== 'none'; });
+    var L = [];
+    L.push('Heute ist ' + DAYS_LONG[now.getDay()] + ', ' + todayStr() + '. Personen: ' + state.people[0] + ' und ' + state.people[1] + '.');
+    L.push('EINZELTERMINE (Datum, Uhrzeit | Titel | Bereich | für wen | Status):');
+    dated.forEach(function (t) { L.push(t.date + ' ' + (t.time || '--:--') + ' | ' + t.title + ' | ' + catOf(t.cat).name + ' | ' + whoLabel(t) + ' | ' + (t.done ? 'erledigt' : 'offen')); });
+    if (!dated.length) L.push('(keine)');
+    L.push('AUFGABEN OHNE DATUM:');
+    undated.forEach(function (t) { L.push(t.title + ' | ' + catOf(t.cat).name + ' | ' + whoLabel(t) + ' | ' + (t.done ? 'erledigt' : 'offen')); });
+    if (!undated.length) L.push('(keine)');
+    L.push('WIEDERKEHRENDE ROUTINEN (Titel | Rhythmus | seit | Uhrzeit | für wen):');
+    rec.forEach(function (t) { L.push(t.title + ' | ' + (t.rep === 'daily' ? 'täglich' : 'wöchentlich ' + repText(t)) + ' | ' + (t.date || '') + ' | ' + (t.time || '--:--') + ' | ' + whoLabel(t)); });
+    if (!rec.length) L.push('(keine)');
+    L.push('EINKAUFSLISTE (offen): ' + (state.shop.filter(function (s) { return !s.done; }).map(function (s) { return s.title; }).join(', ') || 'leer'));
+    return L.join('\n');
+  }
+  var ASK_IDEAS = ['Was steht diese Woche an?', 'Wann war unser letzter Termin?', 'An welchen Tagen ist abends noch Zeit für Sport?', 'Gib uns Tipps, wie wir die Woche besser aufteilen.'];
+  function renderAssistent() {
+    $('progress').innerHTML = '';
+    var out = '';
+    if (!chat.length) {
+      out += '<div class="panel empty"><strong>Frag den Assistenten.</strong><span>Er kennt eure Termine, Routinen und die Einkaufsliste. Er kann Fragen beantworten, zum Beispiel wann etwas war, und Tipps zur Planung geben. Er ändert nichts am Plan.</span><div class="sugg" style="justify-content:center">' +
+        ASK_IDEAS.map(function (q) { return '<button type="button" data-act="ask" data-q="' + esc(q) + '">' + esc(q) + '</button>'; }).join('') + '</div></div>';
+    }
+    for (var i = chat.length - 1; i >= 0; i--) {
+      var c = chat[i];
+      out += '<div class="exchange"><div class="bubble me">' + esc(c.q) + '</div><div class="bubble ai' + (c.err ? ' err' : '') + '">' + esc(c.err || c.a || 'Denke nach …') + '</div></div>';
+    }
+    return out;
+  }
+  function ask(q) {
+    q = (q || '').trim();
+    if (!q || chatBusy || !sampleFn) return;
+    var ex = { q: q, a: '', err: '' };
+    var hist = chat.slice(-4).map(function (c) { return 'Frage: ' + c.q + '\nAntwort: ' + c.a; }).join('\n\n');
+    chat.push(ex); chatBusy = true; render();
+    var prompt = 'Du bist der Familienassistent für einen gemeinsamen Wochenplan von zwei Personen. Antworte auf Deutsch, freundlich, kurz und konkret, in normalem Text ohne Markdown-Formatierung. Nutze für Fakten nur die Daten unten. Fehlt eine Information, sage das offen. Bei Fragen nach früheren Terminen nenne Datum, Wochentag und Uhrzeit. Bei Tipps gib wenige praktische Vorschläge, die zu den Daten passen. Gelöschte Einträge kennst du nicht.\n\n' +
+      '=== DATEN ===\n' + buildContext() + '\n=== ENDE DATEN ===\n\n' + (hist ? 'Bisheriges Gespräch:\n' + hist + '\n\n' : '') + 'Neue Frage: ' + q;
+    sampleFn(prompt, { cache: false, onText: function (r) { ex.a = r.text; render(); } }).then(function (r) {
+      ex.a = r.text || ex.a;
+    }).catch(function (e) {
+      var code = e && e.code;
+      ex.err = code === 'rate_limited' ? 'Gerade zu viele Anfragen. Versuch es in einer Minute noch einmal.' : code === 'not_granted' ? 'Der Assistent ist nicht freigegeben. Bestätige die Anfrage beim nächsten Mal.' : 'Der Assistent konnte nicht antworten. Versuch es noch einmal.';
+    }).then(function () { chatBusy = false; render(); });
+  }
+
   function render() {
     var now = new Date();
     $('dateLine').textContent = DAYS_LONG[now.getDay()] + ', ' + now.getDate() + '. ' + MONTHS[now.getMonth()];
-    var titles = { heute: 'Heute', woche: 'Diese Woche', einkauf: 'Einkauf', routinen: 'Routinen' };
+    var titles = { heute: 'Heute', woche: 'Diese Woche', kalender: 'Kalender', einkauf: 'Einkauf', routinen: 'Routinen', assistent: 'Assistent' };
+    var chatTab = ui.tab === 'assistent';
     $('title').textContent = titles[ui.tab];
     document.querySelectorAll('nav button').forEach(function (b) { b.setAttribute('aria-selected', b.dataset.tab === ui.tab); });
     var shop = ui.tab === 'einkauf';
-    $('taskFormWrap').hidden = shop; $('shopFormWrap').hidden = !shop; $('filters').hidden = shop;
+    $('taskFormWrap').hidden = shop || chatTab; $('shopFormWrap').hidden = !shop; $('chatWrap').hidden = !chatTab; $('filters').hidden = shop || chatTab;
+    $('cSend').disabled = chatBusy;
     var fh = '';
     if (!shop) {
       fh = '<button class="chip" aria-pressed="' + !ui.filter + '" data-act="filter" data-id="">Alle</button>' + CATS.map(function (c) {
@@ -402,7 +518,8 @@ li.item .del:hover { background: var(--bg); }
     $('tWho').innerHTML = '<option value="both">Für beide</option><option value="a">' + esc(state.people[0]) + '</option><option value="b">' + esc(state.people[1]) + '</option>';
     $('tWho').value = cur;
     [0, 1].forEach(function (i) { if (document.activeElement !== $('pn' + i)) $('pn' + i).value = state.people[i]; });
-    $('view').innerHTML = ui.tab === 'heute' ? renderHeute() : ui.tab === 'woche' ? renderWoche() : ui.tab === 'einkauf' ? renderEinkauf() : renderRoutinen();
+    var views = { heute: renderHeute, woche: renderWoche, kalender: renderKalender, einkauf: renderEinkauf, routinen: renderRoutinen, assistent: renderAssistent };
+    $('view').innerHTML = (views[ui.tab] || renderHeute)();
   }
 
   /* ---------- Aktionen ---------- */
@@ -447,6 +564,9 @@ li.item .del:hover { background: var(--bg); }
     else if (act === 'wk') { var n = +b.dataset.n; ui.weekOffset = n === 0 ? 0 : ui.weekOffset + n; render(); }
     else if (act === 'seed') seed();
     else if (act === 'who') { ui.who = id || null; render(); }
+    else if (act === 'day') { ui.sel = b.dataset.d; $('tDate').value = ui.sel; render(); }
+    else if (act === 'mo') { var m = +b.dataset.n; ui.monthOffset = m === 0 ? 0 : ui.monthOffset + m; render(); }
+    else if (act === 'ask') ask(b.dataset.q);
     else if (act === 'shoptoggle') change(function () { var s = state.shop.filter(function (x) { return x.id === id; })[0]; if (s) s.done = !s.done; });
     else if (act === 'shopdel') change(function () { state.shop = state.shop.filter(function (x) { return x.id !== id; }); });
     else if (act === 'clearshop') change(function () { state.shop = state.shop.filter(function (x) { return !x.done; }); });
@@ -490,6 +610,11 @@ li.item .del:hover { background: var(--bg); }
     });
   });
 
+  $('chatForm').addEventListener('submit', function (e) {
+    e.preventDefault();
+    var v = $('cMsg').value; $('cMsg').value = ''; ask(v);
+  });
+
   /* ---------- Start ---------- */
   try {
     var saved = localStorage.getItem(LS);
@@ -497,6 +622,13 @@ li.item .del:hover { background: var(--bg); }
     var tab = sessionStorage.getItem(LS + '-tab'); if (tab) ui.tab = tab;
   } catch (e) {}
   render();
+
+  if (window.claude && window.claude.use) {
+    window.claude.use('sample').then(function (s) {
+      sampleFn = s;
+      if (!s) { $('assistTab').hidden = true; if (ui.tab === 'assistent') ui.tab = 'heute'; render(); }
+    }).catch(function () { $('assistTab').hidden = true; });
+  } else { $('assistTab').hidden = true; if (ui.tab === 'assistent') { ui.tab = 'heute'; render(); } }
 
   if (window.claude && window.claude.use) {
     window.claude.use('db').then(function (d) {
