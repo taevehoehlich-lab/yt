@@ -1,0 +1,225 @@
+<!doctype html>
+<html lang="de">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>TV-Programm heute</title>
+<style>
+:root {
+  --bg:#f5f6f8; --panel:#fff; --text:#1c2230; --muted:#667085; --line:#e3e6ec; --accent:#2f6fed;
+  --c-Film:#d9480f; --c-Serie:#7048e8; --c-Doku:#0c8599; --c-Nachrichten:#495057;
+  --c-Sport:#2f9e44; --c-Unterhaltung:#d6336c; --c-Kinder:#f08c00; --c-Sonstiges:#868e96;
+}
+@media (prefers-color-scheme: dark) {
+  :root { --bg:#12151c; --panel:#1b2029; --text:#e8ebf1; --muted:#98a2b3; --line:#2a303c; --accent:#6c9bff;
+    --c-Film:#ff8a5c; --c-Serie:#a58bff; --c-Doku:#3cc4d8; --c-Nachrichten:#a5adb8;
+    --c-Sport:#5fd37a; --c-Unterhaltung:#ff7ba8; --c-Kinder:#ffc247; --c-Sonstiges:#8a929d; }
+}
+* { box-sizing:border-box; }
+body { margin:0; background:var(--bg); color:var(--text); font:14px/1.4 system-ui,-apple-system,Segoe UI,sans-serif; }
+header { padding:20px 16px 8px; max-width:1400px; margin:auto; }
+h1 { margin:0; font-size:24px; }
+.sub { color:var(--muted); font-size:13px; margin-top:2px; }
+main { max-width:1400px; margin:auto; padding:0 16px 40px; }
+.tiles { display:grid; grid-template-columns:repeat(auto-fit,minmax(150px,1fr)); gap:10px; margin:14px 0; }
+.tile { background:var(--panel); border:1px solid var(--line); border-radius:10px; padding:10px 12px; }
+.tile b { display:block; font-size:22px; }
+.tile span { color:var(--muted); font-size:12px; }
+.bar { display:flex; height:14px; border-radius:7px; overflow:hidden; background:var(--line); margin:6px 0 4px; }
+.bar i { display:block; height:100%; }
+.chips { display:flex; flex-wrap:wrap; gap:6px; align-items:center; margin:12px 0; }
+.chip { border:1px solid var(--line); background:var(--panel); color:var(--text); border-radius:999px; padding:4px 11px; cursor:pointer; font:inherit; }
+.chip .dot { display:inline-block; width:9px; height:9px; border-radius:50%; margin-right:6px; }
+.chip.off { opacity:.4; }
+input[type=search], select { border:1px solid var(--line); background:var(--panel); color:var(--text); border-radius:8px; padding:5px 9px; font:inherit; }
+label.r { color:var(--muted); font-size:13px; display:flex; gap:6px; align-items:center; }
+.panel { background:var(--panel); border:1px solid var(--line); border-radius:12px; }
+.tl-wrap { overflow:auto; position:relative; max-height:75vh; }
+.tl { position:relative; width:max-content; }
+.row { display:flex; border-bottom:1px solid var(--line); height:58px; }
+.row.head { position:sticky; top:0; z-index:5; height:28px; background:var(--panel); }
+.chname { position:sticky; left:0; z-index:4; width:110px; min-width:110px; background:var(--panel); border-right:1px solid var(--line);
+  padding:0 8px; display:flex; align-items:center; font-weight:600; font-size:13px; }
+.track { position:relative; flex:none; }
+.hour { position:absolute; top:6px; font-size:11px; color:var(--muted); border-left:1px solid var(--line); padding-left:4px; height:100%; }
+.p { position:absolute; top:4px; bottom:4px; border-radius:6px; padding:3px 6px; overflow:hidden; cursor:pointer;
+  background:color-mix(in srgb, var(--c) 16%, var(--panel)); border:1px solid color-mix(in srgb, var(--c) 55%, transparent);
+  border-left:4px solid var(--c); font-size:12px; line-height:1.25; }
+.p:hover, .p.sel { background:color-mix(in srgb, var(--c) 32%, var(--panel)); z-index:2; }
+.p .t { font-weight:600; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+.p .m { color:var(--muted); font-size:11px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+.p.hide { display:none; }
+.now { position:absolute; top:0; bottom:0; width:2px; background:#e03131; z-index:3; pointer-events:none; }
+.cols { display:grid; grid-template-columns:2fr 1fr; gap:14px; margin-top:14px; }
+@media (max-width:900px) { .cols { grid-template-columns:1fr; } }
+h2 { font-size:16px; margin:0; padding:12px 14px 6px; }
+.hl { list-style:none; margin:0; padding:0 6px 8px; max-height:420px; overflow:auto; }
+.hl li { display:flex; gap:10px; align-items:center; padding:7px 8px; border-radius:8px; cursor:pointer; }
+.hl li:hover { background:color-mix(in srgb, var(--accent) 10%, transparent); }
+.hl .yr { width:44px; font-weight:700; font-variant-numeric:tabular-nums; }
+.hl .ti { flex:1; min-width:0; }
+.hl .ti div:first-child { font-weight:600; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+.hl .ti div:last-child { color:var(--muted); font-size:12px; }
+.star { color:#f59f00; font-weight:700; white-space:nowrap; }
+.detail { padding:0 14px 14px; }
+.detail .tag { display:inline-block; padding:1px 8px; border-radius:999px; color:#fff; font-size:12px; background:var(--c); }
+.detail h3 { margin:8px 0 2px; font-size:18px; }
+.detail p { margin:8px 0 0; color:var(--muted); }
+.empty { color:var(--muted); padding:14px; }
+.era { display:flex; align-items:flex-end; gap:4px; height:90px; margin:22px 14px 0; }
+.era div { flex:1; background:var(--c-Film); border-radius:3px 3px 0 0; min-height:2px; position:relative; }
+.era span { position:absolute; bottom:-18px; left:50%; transform:translateX(-50%); font-size:10px; color:var(--muted); white-space:nowrap; }
+.era b { position:absolute; top:-16px; left:50%; transform:translateX(-50%); font-size:11px; }
+</style>
+</head>
+<body>
+<header>
+  <h1>📺 TV-Programm <span id="date"></span></h1>
+  <div class="sub" id="src"></div>
+</header>
+<main>
+  <div class="tiles" id="tiles"></div>
+  <div class="panel" style="padding:10px 14px">
+    <b>Sendezeit nach Kategorie</b>
+    <div class="bar" id="bar"></div>
+    <div class="sub" id="barlbl"></div>
+  </div>
+  <div class="chips" id="chips"></div>
+  <div class="chips">
+    <input type="search" id="q" placeholder="Titel oder Sender suchen …">
+    <label class="r">Mindestbewertung <input type="range" id="minr" min="0" max="9" step="0.5" value="0"><span id="minrv">0</span></label>
+    <label class="r">Zeitraum
+      <select id="when"><option value="all">ganzer Tag</option><option value="now">läuft jetzt / später</option><option value="prime">Primetime 20–23 Uhr</option></select>
+    </label>
+  </div>
+  <div class="panel tl-wrap" id="tlwrap"><div class="tl" id="tl"></div></div>
+  <div class="cols">
+    <div class="panel"><h2>⭐ Highlights (Filme &amp; Serien nach Bewertung)</h2><ul class="hl" id="hl"></ul></div>
+    <div>
+      <div class="panel" id="detailp"><h2>Details</h2><div class="detail" id="detail"><div class="empty" style="padding:0">Sendung anklicken …</div></div></div>
+      <div class="panel" style="margin-top:14px;padding-bottom:26px"><h2>🎬 Filme nach Jahrzehnt</h2><div class="era" id="era"></div></div>
+    </div>
+  </div>
+</main>
+<script>
+const D = /*__DATA__*/null;
+const PX = 4;                       // Pixel pro Minute
+const W = 24 * 60 * PX;
+const css = n => getComputedStyle(document.documentElement).getPropertyValue(n).trim();
+const $ = id => document.getElementById(id);
+const fmt = ms => new Date(ms).toLocaleTimeString('de-DE', {hour:'2-digit', minute:'2-digit'});
+const esc = s => String(s ?? '').replace(/[&<>"]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+const col = c => `var(--c-${c})`;
+const rate = p => p.rating ? `<span class="star">★ ${p.rating.toFixed(1)}</span>` : '';
+
+const active = new Set(D.categories);
+const P = D.programmes.map((p, i) => ({...p, i}));
+
+$('date').textContent = D.date_label;
+$('src').textContent = 'Quelle: ' + D.source;
+
+// Kennzahlen
+const S = D.stats;
+$('tiles').innerHTML = [
+  [S.n_programmes, 'Sendungen'], [D.channels.length, 'Sender'], [S.n_films, 'Spielfilme'],
+  [S.avg_rating ?? '–', 'Ø Bewertung'],
+  [S.oldest_film ? `${S.oldest_film}–${S.newest_film}` : '–', 'Filmjahre'],
+].map(([v, l]) => `<div class="tile"><b>${v}</b><span>${l}</span></div>`).join('');
+
+const total = Object.values(S.minutes_by_cat).reduce((a, b) => a + b, 0) || 1;
+$('bar').innerHTML = D.categories.map(c => `<i style="width:${S.minutes_by_cat[c] / total * 100}%;background:${col(c)}" title="${c}"></i>`).join('');
+$('barlbl').textContent = D.categories.filter(c => S.minutes_by_cat[c]).map(c => `${c} ${Math.round(S.minutes_by_cat[c] / total * 100)} %`).join(' · ');
+
+// Filter
+$('chips').innerHTML = D.categories.map(c =>
+  `<button class="chip" data-c="${c}"><span class="dot" style="background:${col(c)}"></span>${c}</button>`).join('');
+$('chips').onclick = e => {
+  const b = e.target.closest('.chip'); if (!b) return;
+  const c = b.dataset.c; active.has(c) ? active.delete(c) : active.add(c);
+  b.classList.toggle('off', !active.has(c)); apply();
+};
+['q', 'minr', 'when'].forEach(id => $(id).addEventListener('input', apply));
+
+// Timeline
+const hours = Array.from({length: 24}, (_, h) => `<div class="hour" style="left:${h * 60 * PX}px">${String(h).padStart(2, '0')}:00</div>`).join('');
+let html = `<div class="row head"><div class="chname"></div><div class="track" style="width:${W}px">${hours}</div></div>`;
+for (const ch of D.channels) {
+  const blocks = P.filter(p => p.channel === ch).map(p => {
+    const l = Math.max(0, (p.start - D.day_start) / 60000) * PX;
+    const w = (Math.min(p.stop, D.day_start + 864e5) - Math.max(p.start, D.day_start)) / 60000 * PX;
+    const meta = [fmt(p.start), p.year, p.rating ? '★' + p.rating.toFixed(1) : ''].filter(Boolean).join(' · ');
+    return `<div class="p" data-i="${p.i}" style="left:${l}px;width:${w - 2}px;--c:${col(p.cat)}" title="${esc(p.title)}">
+      <div class="t">${esc(p.title)}</div><div class="m">${meta}</div></div>`;
+  }).join('');
+  html += `<div class="row"><div class="chname">${esc(ch)}</div><div class="track" style="width:${W}px">${blocks}</div></div>`;
+}
+$('tl').innerHTML = html + '<div class="now" id="now"></div>';
+$('tl').onclick = e => { const b = e.target.closest('.p'); if (b) show(+b.dataset.i); };
+
+function placeNow() {
+  const m = (Date.now() - D.day_start) / 60000;
+  const n = $('now');
+  if (m < 0 || m > 1440) { n.style.display = 'none'; return; }
+  n.style.left = (110 + m * PX) + 'px';
+}
+placeNow(); setInterval(placeNow, 30000);
+const nowMin = (Date.now() - D.day_start) / 60000;
+if (nowMin > 0 && nowMin < 1440) $('tlwrap').scrollLeft = Math.max(0, nowMin * PX - 150);
+
+// Detail
+function show(i) {
+  const p = P[i];
+  document.querySelectorAll('.p.sel').forEach(x => x.classList.remove('sel'));
+  document.querySelector(`.p[data-i="${i}"]`)?.classList.add('sel');
+  const min = Math.round((p.stop - p.start) / 60000);
+  $('detail').innerHTML = `<span class="tag" style="--c:${col(p.cat)}">${p.cat}</span>
+    <h3>${esc(p.title)}</h3>
+    <div>${esc(p.sub)}</div>
+    <p>${esc(p.channel)} · ${fmt(p.start)}–${fmt(p.stop)} (${min} Min.)${p.year ? ' · <b>' + p.year + '</b>' : ''}
+    ${p.rating ? `<br>${rate(p)} <span class="sub">(${esc(p.rating_src || '')}${p.votes ? ', ' + p.votes.toLocaleString('de-DE') + ' Stimmen' : ''})</span>` : ''}</p>
+    ${p.desc ? `<p>${esc(p.desc)}</p>` : ''}`;
+}
+
+// Filter anwenden + Highlights
+function visible(p) {
+  const q = $('q').value.toLowerCase(), minr = +$('minr').value, when = $('when').value;
+  if (!active.has(p.cat)) return false;
+  if (q && !(p.title + ' ' + p.channel + ' ' + p.sub).toLowerCase().includes(q)) return false;
+  if (minr && !(p.rating >= minr)) return false;
+  if (when === 'now' && p.stop < Date.now()) return false;
+  if (when === 'prime') {
+    const s = D.day_start + 20 * 36e5, e = D.day_start + 23 * 36e5;
+    if (p.stop <= s || p.start >= e) return false;
+  }
+  return true;
+}
+function apply() {
+  $('minrv').textContent = $('minr').value;
+  const vis = P.filter(visible);
+  const ok = new Set(vis.map(p => p.i));
+  document.querySelectorAll('.p').forEach(b => b.classList.toggle('hide', !ok.has(+b.dataset.i)));
+  const hl = vis.filter(p => (p.cat === 'Film' || p.cat === 'Serie' || p.rating) && p.rating)
+    .sort((a, b) => b.rating - a.rating).slice(0, 30);
+  $('hl').innerHTML = hl.length ? hl.map(p => `<li data-i="${p.i}">
+      <div class="yr">${p.year ?? ''}</div>
+      <div class="ti"><div>${esc(p.title)}</div><div>${esc(p.channel)} · ${fmt(p.start)} · ${p.cat}</div></div>
+      <div class="star">★ ${p.rating.toFixed(1)}</div></li>`).join('')
+    : '<li class="empty">Keine bewerteten Sendungen (TMDB_API_KEY / OMDB_API_KEY setzen).</li>';
+}
+$('hl').onclick = e => {
+  const li = e.target.closest('li[data-i]'); if (!li) return;
+  show(+li.dataset.i);
+  document.querySelector(`.p[data-i="${li.dataset.i}"]`)?.scrollIntoView({block:'center', inline:'center', behavior:'smooth'});
+};
+
+// Filme nach Jahrzehnt
+const dec = {};
+P.filter(p => p.cat === 'Film' && p.year).forEach(p => { const d = Math.floor(p.year / 10) * 10; dec[d] = (dec[d] || 0) + 1; });
+const keys = Object.keys(dec).sort(), mx = Math.max(1, ...Object.values(dec));
+$('era').innerHTML = keys.length ? keys.map(k => `<div style="height:${dec[k] / mx * 100}%"><b>${dec[k]}</b><span>${k}er</span></div>`).join('')
+  : '<div class="empty">Keine Filme mit Jahresangabe.</div>';
+
+apply();
+</script>
+</body>
+</html>
