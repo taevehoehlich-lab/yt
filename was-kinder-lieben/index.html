@@ -307,13 +307,13 @@ const FAQ = [
 /* Fußzeile: leere Links werden ausgeblendet.
    Für Impressum/Datenschutz die vollständige Adresse der Wix-Seite eintragen. */
 const LINKS = [
-  ['Impressum',   ''],   // z. B. 'https://deinedomain.de/impressum'
-  ['Datenschutz', ''],
-  ['Widerruf',    ''],
-  ['Kontakt',     ''],   // z. B. 'mailto:hallo@deinedomain.de'
+  ['Impressum',   'https://www.was-kinder-lieben.de/impressum'],
+  ['Datenschutz', 'https://www.was-kinder-lieben.de/datenschutz'],
+  ['Widerruf',    ''],   // Adresse der Wix-Seite eintragen, sobald sie existiert
+  ['Kontakt',     'mailto:waskinderlieben.info@gmail.com'],
   ['Instagram',   ''],
   ['Pinterest',   ''],
-  ['TikTok',      '']
+  ['TikTok',      'https://www.tiktok.com/@waskinderlieben']
 ];
 
 /* ===================================================================== */
@@ -394,7 +394,21 @@ function toast(msg){ const t=$('#toast'); t.textContent=msg; t.classList.add('on
 
 $('#faqList').innerHTML = FAQ.map(([q,a]) => `<details><summary>${esc(q)}</summary><p>${esc(a)}</p></details>`).join('');
 $('#footLinks').innerHTML = LINKS.filter(l => l[1]).map(([n,u]) =>
-  `<a href="${esc(u)}" target="${u.startsWith('mailto:')?'_self':'_top'}" rel="noopener">${esc(n)}</a>`).join('');
+  `<a href="${esc(u)}" target="${u.startsWith('mailto:')?'_self':(u.includes('was-kinder-lieben.de')?'_top':'_blank')}" rel="noopener">${esc(n)}</a>`).join('');
+
+/* Sprungmarken: In Wix hat der eingebettete Block keinen eigenen Scroll, dort laufen
+   normale #-Links ins Leere. Darum scrollen wir selbst, auch die umgebende Wix-Seite. */
+document.addEventListener('click', e => {
+  const a = e.target.closest('a[href^="#"]'); if (!a) return;
+  const id = a.getAttribute('href').slice(1);
+  const el = id ? document.getElementById(id) : document.body;
+  if (!el) return;
+  e.preventDefault();
+  const reduce = matchMedia('(prefers-reduced-motion: reduce)').matches;
+  const y = Math.max(0, el.getBoundingClientRect().top + window.scrollY - 70);
+  try { el.scrollIntoView({ behavior: reduce ? 'auto' : 'smooth', block: 'start' }); } catch (_) {}
+  try { window.parent.postMessage({ source: 'was-kinder-lieben', type: 'scrollTo', y: y }, '*'); } catch (_) {}
+});
 
 renderChips(); renderGrid();
 </script>
