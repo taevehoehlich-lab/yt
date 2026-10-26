@@ -23,8 +23,7 @@
   --sans:'Quicksand','Segoe UI',system-ui,sans-serif;
 }
 *{box-sizing:border-box}
-html{scroll-behavior:smooth;scroll-padding-top:84px}
-body{margin:0;background:var(--cream);color:var(--ink);font-family:var(--sans);font-size:17px;line-height:1.65;-webkit-font-smoothing:antialiased}
+body{margin:0;display:flex;flex-direction:column;min-height:100vh;background:var(--cream);color:var(--ink);font-family:var(--sans);font-size:17px;line-height:1.65;-webkit-font-smoothing:antialiased}
 img{max-width:100%;display:block}
 a{color:inherit}
 h1,h2,h3{margin:0;font-weight:600;line-height:1.2}
@@ -42,7 +41,7 @@ p{margin:0 0 1em}
 .btn.small{padding:.55em 1.1em;font-size:.92rem}
 
 /* ===== Kopfzeile ===== */
-.top{position:sticky;top:0;z-index:20;background:rgba(251,246,236,.92);backdrop-filter:blur(8px);border-bottom:1px solid var(--line)}
+.top{background:var(--cream);border-bottom:1px solid var(--line)}
 .top .wrap{display:flex;align-items:center;justify-content:space-between;gap:16px;min-height:68px}
 .mark{text-decoration:none;display:flex;align-items:baseline;gap:.3em;font-family:var(--serif);font-size:1.55rem;line-height:1}
 .mark b{font-family:var(--sans);font-weight:700;letter-spacing:-.02em}
@@ -50,9 +49,13 @@ p{margin:0 0 1em}
 .menu{display:flex;gap:6px;align-items:center}
 .menu a{text-decoration:none;font-weight:600;font-size:.95rem;padding:.45em .9em;border-radius:999px;color:var(--brown)}
 .menu a:hover{background:var(--paper)}
-.menu .btn{color:#fff;margin-left:6px}
-.menu .btn:hover{background:#56673c}
-@media(max-width:700px){.menu a:not(.btn){display:none}.mark{font-size:1.3rem}}
+.menu a[aria-current="page"]{background:var(--brown);color:#fff}
+@media(max-width:700px){.top .wrap{flex-direction:column;gap:6px;padding:10px 0}.mark{font-size:1.3rem}.menu a{padding:.35em .8em;font-size:.9rem}}
+
+/* ===== Ansichten (statt Scrollen zu Abschnitten) ===== */
+main{flex:1}
+.view{display:none}
+.view.on{display:block}
 
 /* ===== Hero ===== */
 .hero{padding:28px 0 8px}
@@ -78,7 +81,7 @@ section{padding:64px 0}
 .grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(250px,1fr));gap:24px}
 .card{background:var(--paper);border-radius:var(--radius);box-shadow:var(--shadow);overflow:hidden;display:flex;flex-direction:column;transition:transform .2s}
 .card:hover{transform:translateY(-4px)}
-.cover{position:relative;aspect-ratio:1/1;display:grid;place-items:center;overflow:hidden;cursor:pointer;border:0;padding:0;width:100%;background:none}
+.cover{position:relative;aspect-ratio:1/1;display:grid;place-items:center;overflow:hidden;cursor:pointer;border:0;padding:0;width:100%;background:none;text-decoration:none}
 .cover img{width:100%;height:100%;object-fit:cover}
 .art{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:12px;padding:22px;text-align:center}
 .art .sheet{background:rgba(255,253,248,.88);border-radius:16px;padding:22px 20px 18px;width:78%;box-shadow:0 8px 20px rgba(0,0,0,.07);display:flex;flex-direction:column;align-items:center;gap:8px}
@@ -124,50 +127,37 @@ details[open] summary::after{transform:translateY(-50%) rotate(45deg)}
 details p{padding:0 20px;margin:0 0 16px;color:var(--muted)}
 
 /* ===== Fußzeile ===== */
-footer{background:var(--brown);color:#F6EBDD;padding:40px 0 30px;text-align:center}
+footer{margin-top:auto;background:var(--brown);color:#F6EBDD;padding:40px 0 30px;text-align:center}
 footer .mark{justify-content:center;font-size:1.6rem;color:#fff}
 footer nav{display:flex;flex-wrap:wrap;gap:6px 22px;justify-content:center;margin:16px 0}
 footer a{text-decoration:none;font-size:.95rem}
 footer a:hover{text-decoration:underline}
 footer small{display:block;opacity:.75;font-size:.82rem;max-width:62ch;margin:10px auto 0}
 
-/* ===== Produkt-Dialog ===== */
-dialog{border:0;padding:0;border-radius:var(--radius);width:min(820px,100% - 24px);max-height:92vh;background:var(--paper);color:var(--ink);box-shadow:0 30px 80px rgba(60,40,20,.35)}
-dialog::backdrop{background:rgba(59,40,28,.5);backdrop-filter:blur(2px)}
-.dlg{display:grid;grid-template-columns:.9fr 1.1fr}
-.dlg .cover{cursor:default;min-height:300px;aspect-ratio:auto;height:100%}
-.dlg .info{padding:30px 30px 28px;display:flex;flex-direction:column;gap:10px}
-.dlg h3{font-size:1.5rem;color:var(--brown)}
-.dlg ul{margin:0 0 6px;padding:0;list-style:none}
-.dlg li{padding-left:28px;position:relative;margin:.35em 0;font-size:.97rem}
-.dlg li::before{content:"♥";position:absolute;left:0;color:var(--coral)}
-.close{position:absolute;top:12px;right:12px;width:42px;height:42px;border-radius:50%;border:0;background:var(--paper);box-shadow:0 2px 8px rgba(0,0,0,.15);cursor:pointer;font-size:1.3rem;color:var(--brown);z-index:2}
-.close:hover{background:var(--cream)}
-@media(max-width:640px){.dlg{grid-template-columns:1fr}.dlg .cover{min-height:200px;height:200px}}
-
 .toast{position:fixed;left:50%;bottom:24px;transform:translate(-50%,30px);background:var(--ink);color:#fff;padding:.8em 1.3em;border-radius:14px;font-size:.92rem;opacity:0;pointer-events:none;transition:.25s;z-index:60;max-width:90vw;text-align:center}
 .toast.on{opacity:1;transform:translate(-50%,0)}
 
-@media(prefers-reduced-motion:reduce){*{transition:none!important;scroll-behavior:auto!important}}
+@media(prefers-reduced-motion:reduce){*{transition:none!important}}
 </style>
 </head>
 <body>
 
 <header class="top">
   <div class="wrap">
-    <a class="mark" href="#start" aria-label="Was Kinder lieben – zum Seitenanfang">
+    <a class="mark" href="#shop" data-view="shop" aria-label="Was Kinder lieben – zum Shop">
       Was <b><span class="k">K</span><span class="i">i</span><span class="n">n</span><span class="d">d</span><span class="e">e</span><span class="r">r</span></b> lieben
     </a>
     <nav class="menu" aria-label="Hauptmenü">
-      <a href="#about">Über uns</a>
-      <a href="#faq">FAQ</a>
-      <a class="btn small" href="#shop">Zum Shop</a>
+      <a href="#shop" data-view="shop" aria-current="page">Shop</a>
+      <a href="#about" data-view="about">Über uns</a>
+      <a href="#faq" data-view="faq">FAQ</a>
     </nav>
   </div>
 </header>
 
 <main id="start">
 
+ <div class="view on" id="v-shop">
   <section class="hero" aria-labelledby="h1">
     <div class="wrap">
       <h1 id="h1" class="sr-only">Was Kinder lieben – Inspiration für einen wundervollen Familienalltag</h1>
@@ -175,8 +165,8 @@ dialog::backdrop{background:rgba(59,40,28,.5);backdrop-filter:blur(2px)}
       <div class="hero-cta">
         <p>Digitale Helfer für einen entspannten Familienalltag</p>
         <div class="row">
-          <a class="btn" href="#shop">Digitale Produkte entdecken</a>
-          <a class="btn ghost" href="#about">Wer wir sind</a>
+          <a class="btn" href="#about" data-view="about">Wer wir sind</a>
+          <a class="btn ghost" href="#faq" data-view="faq">Häufige Fragen</a>
         </div>
       </div>
     </div>
@@ -206,6 +196,9 @@ dialog::backdrop{background:rgba(59,40,28,.5);backdrop-filter:blur(2px)}
     </div>
   </section>
 
+ </div>
+
+ <div class="view" id="v-about">
   <section id="about" aria-labelledby="about-title">
     <div class="wrap about">
       <div>
@@ -225,7 +218,10 @@ dialog::backdrop{background:rgba(59,40,28,.5);backdrop-filter:blur(2px)}
     </div>
   </section>
 
-  <section id="faq" aria-labelledby="faq-title" style="padding-top:0">
+ </div>
+
+ <div class="view" id="v-faq">
+  <section id="faq" aria-labelledby="faq-title">
     <div class="wrap">
       <div style="text-align:center">
         <div class="eyebrow">Gut zu wissen</div>
@@ -234,6 +230,7 @@ dialog::backdrop{background:rgba(59,40,28,.5);backdrop-filter:blur(2px)}
       <div class="faq" id="faqList"></div>
     </div>
   </section>
+ </div>
 </main>
 
 <footer>
@@ -243,24 +240,6 @@ dialog::backdrop{background:rgba(59,40,28,.5);backdrop-filter:blur(2px)}
     <small>Inspiration für einen wundervollen Familienalltag.</small>
   </div>
 </footer>
-
-<dialog id="dlg" aria-labelledby="dlgTitle">
-  <button class="close" id="dlgClose" aria-label="Schließen">✕</button>
-  <div class="dlg">
-    <div class="cover" id="dlgCover"></div>
-    <div class="info">
-      <div class="cat" id="dlgCat"></div>
-      <h3 id="dlgTitle"></h3>
-      <p id="dlgDesc" style="color:var(--muted);margin:0 0 4px"></p>
-      <ul id="dlgList"></ul>
-      <div class="buy-row" style="margin-top:auto;padding-top:10px">
-        <div class="price" id="dlgPrice"></div>
-        <a class="btn" id="dlgBuy" href="#" target="_blank" rel="noopener">Jetzt kaufen</a>
-      </div>
-      <small style="color:var(--muted)">Digitales Produkt – es wird nichts per Post verschickt.</small>
-    </div>
-  </div>
-</dialog>
 
 <div class="toast" id="toast" role="status"></div>
 
@@ -278,8 +257,8 @@ const CATEGORIES = {
    price:       Preis in Cent (790 = 7,90 €)
    oldPrice:    optional, wird durchgestrichen angezeigt
    badge:       optional ("Neu", "Beliebt", "Spar-Paket" …)
-   checkoutUrl: Link zur Kasse (Wix-Stores-Produktseite, Stripe-Zahlungslink,
-                Digistore24, Etsy …). Öffnet in neuem Tab.
+   checkoutUrl: Adresse der Wix-Produktseite (oder eines anderen Kauflinks).
+                Eigene Adressen öffnen im Fenster der Wix-Seite, fremde in einem neuen Tab.
    image:       optional, URL eines Produktbilds. Ohne Bild wird ein Cover gezeichnet. */
 const PRODUCTS = [
   { id:'dunkel', cat:'buecher', title:'Monsterich hat Angst im Dunkeln', price:399,
@@ -335,6 +314,10 @@ function coverHTML(p){
   return (p.badge?`<span class="badge">${esc(p.badge)}</span>`:'') +
     `<div class="art" style="background:${c.color}"><div class="sheet">${ICONS[c.icon]}<div class="t">${esc(p.title)}</div><div class="s">${esc(c.label)}</div></div></div>`;
 }
+function linkAttrs(u){
+  if (!u) return '';
+  return u.startsWith('mailto:') ? 'target="_self"' : (u.includes('was-kinder-lieben.de') ? 'target="_top"' : 'target="_blank" rel="noopener"');
+}
 function priceHTML(p){ return (p.oldPrice?`<s>${euro(p.oldPrice)}</s>`:'') + euro(p.price); }
 
 let filter = 'alle';
@@ -348,45 +331,27 @@ function renderGrid(){
   const list = PRODUCTS.filter(p => filter==='alle' || p.cat===filter);
   $('#grid').innerHTML = list.length ? list.map(p => `
     <article class="card">
-      <button class="cover" data-id="${p.id}" aria-label="Details zu ${esc(p.title)}">${coverHTML(p)}</button>
+      <a class="cover" data-buy="${esc(p.id)}" href="${esc(p.checkoutUrl||'#')}" ${linkAttrs(p.checkoutUrl)} aria-label="${esc(p.title)} ansehen">${coverHTML(p)}</a>
       <div class="body">
         <div class="cat">${esc(CATEGORIES[p.cat].label)}</div>
         <h3>${esc(p.title)}</h3>
         <p class="desc">${esc(p.desc)}</p>
         <div class="buy-row">
           <div class="price">${priceHTML(p)}</div>
-          <button class="btn small" data-id="${p.id}">Ansehen</button>
+          <a class="btn small" data-buy="${esc(p.id)}" href="${esc(p.checkoutUrl||'#')}" ${linkAttrs(p.checkoutUrl)}>Zum Produkt</a>
         </div>
       </div>
     </article>`).join('') : '<p class="empty">In dieser Kategorie gibt es noch nichts. Schau bald wieder vorbei!</p>';
 }
-
-const dlg = $('#dlg');
-function openProduct(id){
-  const p = PRODUCTS.find(x => x.id===id); if(!p) return;
-  $('#dlgCover').innerHTML = coverHTML(p);
-  $('#dlgCat').textContent = CATEGORIES[p.cat].label;
-  $('#dlgTitle').textContent = p.title;
-  $('#dlgDesc').textContent = p.desc;
-  $('#dlgList').innerHTML = (p.includes||[]).map(i => `<li>${esc(i)}</li>`).join('');
-  $('#dlgPrice').innerHTML = priceHTML(p);
-  const buy = $('#dlgBuy');
-  buy.dataset.url = p.checkoutUrl || '';
-  buy.href = p.checkoutUrl || '#';
-  dlg.showModal();
-}
-$('#dlgBuy').addEventListener('click', e => {
-  if (!e.currentTarget.dataset.url){ e.preventDefault(); toast('Noch kein Kauflink hinterlegt (checkoutUrl im Code eintragen).'); }
-});
-$('#dlgClose').addEventListener('click', () => dlg.close());
-dlg.addEventListener('click', e => { if (e.target === dlg) dlg.close(); });
 
 $('#chips').addEventListener('click', e => {
   const b = e.target.closest('.chip'); if(!b) return;
   filter = b.dataset.k; renderChips(); renderGrid();
 });
 $('#grid').addEventListener('click', e => {
-  const b = e.target.closest('[data-id]'); if(b) openProduct(b.dataset.id);
+  const a = e.target.closest('[data-buy]'); if (!a) return;
+  const p = PRODUCTS.find(x => x.id === a.dataset.buy);
+  if (p && !p.checkoutUrl){ e.preventDefault(); toast('Noch kein Kauflink hinterlegt (checkoutUrl im Code eintragen).'); }
 });
 
 let tt;
@@ -396,21 +361,25 @@ $('#faqList').innerHTML = FAQ.map(([q,a]) => `<details><summary>${esc(q)}</summa
 $('#footLinks').innerHTML = LINKS.filter(l => l[1]).map(([n,u]) =>
   `<a href="${esc(u)}" target="${u.startsWith('mailto:')?'_self':(u.includes('was-kinder-lieben.de')?'_top':'_blank')}" rel="noopener">${esc(n)}</a>`).join('');
 
-/* Sprungmarken: In Wix hat der eingebettete Block keinen eigenen Scroll, dort laufen
-   normale #-Links ins Leere. Darum scrollen wir selbst, auch die umgebende Wix-Seite. */
+/* Ansichten: In Wix lässt sich der eingebettete Block nicht zu Abschnitten scrollen.
+   Darum wechseln Shop, Über uns und FAQ die sichtbare Ansicht im Block selbst. */
+const VIEWS = ['shop', 'about', 'faq'];
+function showView(name){
+  if (!VIEWS.includes(name)) name = 'shop';
+  VIEWS.forEach(v => $('#v-' + v).classList.toggle('on', v === name));
+  document.querySelectorAll('.menu a').forEach(a => {
+    if (a.dataset.view === name) a.setAttribute('aria-current', 'page'); else a.removeAttribute('aria-current');
+  });
+  window.scrollTo(0, 0);
+  try { window.parent.postMessage({ source: 'was-kinder-lieben', type: 'view', view: name, height: document.documentElement.scrollHeight }, '*'); } catch (_) {}
+}
 document.addEventListener('click', e => {
-  const a = e.target.closest('a[href^="#"]'); if (!a) return;
-  const id = a.getAttribute('href').slice(1);
-  const el = id ? document.getElementById(id) : document.body;
-  if (!el) return;
-  e.preventDefault();
-  const reduce = matchMedia('(prefers-reduced-motion: reduce)').matches;
-  const y = Math.max(0, el.getBoundingClientRect().top + window.scrollY - 70);
-  try { el.scrollIntoView({ behavior: reduce ? 'auto' : 'smooth', block: 'start' }); } catch (_) {}
-  try { window.parent.postMessage({ source: 'was-kinder-lieben', type: 'scrollTo', y: y }, '*'); } catch (_) {}
+  const a = e.target.closest('[data-view]'); if (!a) return;
+  e.preventDefault(); showView(a.dataset.view);
 });
 
 renderChips(); renderGrid();
+showView(location.hash.slice(1));
 </script>
 </body>
 </html>
